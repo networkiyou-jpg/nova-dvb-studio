@@ -1,0 +1,147 @@
+/* NOVA DVB Studio design tokens.
+   Layout concept: a broadcast control desk. Fixed chrome (top nav, sidebar, status strip),
+   one dominant picture, and quiet instrument cards around it.
+   Themes only change tokens, so every screen stays theme-independent. */
+:root {
+  color-scheme: dark;
+  /* Ground */
+  --bg-0: #070b18;
+  --bg-1: #0b1020;
+  --bg-2: #101729;
+  --surface: rgba(16, 23, 44, .74);
+  --surface-2: rgba(25, 33, 62, .62);
+  --surface-3: rgba(38, 47, 84, .55);
+  --surface-solid: #121a31;
+  --field: rgba(9, 14, 30, .72);
+  /* Lines */
+  --line: rgba(137, 146, 214, .17);
+  --line-2: rgba(137, 146, 214, .3);
+  --edge-a: rgba(120, 104, 240, .55);
+  --edge-b: rgba(40, 184, 255, .3);
+  /* Text */
+  --fg: #f3f5fa;
+  --fg-2: #a3adc2;
+  --fg-3: #7d88a3;
+  --on-accent: #ffffff;
+  /* Accents */
+  --accent: #7868f0;
+  --accent-deep: #5a3ff0;
+  --accent-2: #28b8ff;
+  --accent-3: #25d9d0;
+  --glow: rgba(120, 104, 240, .5);
+  --glow-2: rgba(40, 184, 255, .3);
+  --grad: linear-gradient(100deg, var(--accent-deep), #8a5cf6);
+  --grad-soft: linear-gradient(100deg, rgba(90, 63, 240, .34), rgba(138, 92, 246, .14));
+  --grad-meter: linear-gradient(90deg, var(--accent-3), #2bd98f);
+  /* States, kept apart from the accent */
+  --good: #2fdc9a;
+  --good-bg: rgba(47, 220, 154, .13);
+  --warn: #ffb648;
+  --warn-bg: rgba(255, 182, 72, .13);
+  --bad: #ff5468;
+  --bad-bg: rgba(255, 84, 104, .14);
+  --star: #ffb020;
+  /* Shape */
+  --r-card: 16px;
+  --r-ctl: 10px;
+  --r-pill: 999px;
+  --stroke: 1.7;
+  /* Scale */
+  --ui: 1;
+  --pad: 16px;
+  --row: 36px;
+  /* Type */
+  --font-display: "Outfit", "Segoe UI Variable Display", "Segoe UI", "Inter Display", Inter, system-ui, sans-serif;
+  --font-body: "Figtree", "Segoe UI Variable Text", "Segoe UI", Inter, system-ui, sans-serif;
+  --font-ar: "IBM Plex Sans Arabic", "Segoe UI", Tahoma, "DejaVu Sans", sans-serif;
+  --font-mono: "JetBrains Mono", "Cascadia Mono", Consolas, "DejaVu Sans Mono", monospace;
+}
+
+/* NOVA Purple: warmer violet ground, the accent carries more weight */
+[data-nova-theme="purple"] {
+  --bg-0: #0d0817; --bg-1: #130b22; --bg-2: #1b1030;
+  --surface: rgba(32, 19, 58, .74); --surface-2: rgba(46, 29, 82, .6); --surface-3: rgba(62, 40, 108, .55);
+  --surface-solid: #1f1436; --field: rgba(16, 9, 30, .72);
+  --line: rgba(176, 140, 240, .18); --line-2: rgba(176, 140, 240, .32);
+  --edge-a: rgba(176, 106, 255, .6); --edge-b: rgba(232, 121, 249, .28);
+  --accent: #a56bff; --accent-deep: #7a30ec; --accent-2: #e879f9; --accent-3: #8f9bff;
+  --glow: rgba(165, 107, 255, .5); --glow-2: rgba(232, 121, 249, .25);
+  --grad: linear-gradient(100deg, #7a30ec, #c04ee6);
+  --grad-soft: linear-gradient(100deg, rgba(122, 48, 236, .36), rgba(192, 78, 230, .14));
+  --grad-meter: linear-gradient(90deg, #8f9bff, #d683ff);
+  --fg-2: #b3a8c9; --fg-3: #8c80a6;
+}
+
+/* NOVA Blue: broadcast-monitor blue, no violet */
+[data-nova-theme="blue"] {
+  --bg-0: #050d1a; --bg-1: #081426; --bg-2: #0d1d36;
+  --surface: rgba(12, 28, 54, .74); --surface-2: rgba(19, 41, 76, .6); --surface-3: rgba(28, 56, 102, .55);
+  --surface-solid: #0e2140; --field: rgba(5, 13, 28, .72);
+  --line: rgba(110, 170, 230, .18); --line-2: rgba(110, 170, 230, .32);
+  --edge-a: rgba(40, 150, 255, .6); --edge-b: rgba(37, 217, 208, .3);
+  --accent: #2f9bff; --accent-deep: #1766e0; --accent-2: #25d9d0; --accent-3: #5fd0ff;
+  --glow: rgba(47, 155, 255, .5); --glow-2: rgba(37, 217, 208, .25);
+  --grad: linear-gradient(100deg, #1766e0, #27a4ff);
+  --grad-soft: linear-gradient(100deg, rgba(23, 102, 224, .36), rgba(39, 164, 255, .14));
+  --grad-meter: linear-gradient(90deg, #25d9d0, #2f9bff);
+  --fg-2: #a0b2c9; --fg-3: #7a8ea8;
+}
+
+/* NOVA Neon: the loudest theme, deep black with cyan and magenta edges */
+[data-nova-theme="neon"] {
+  --bg-0: #04050c; --bg-1: #070814; --bg-2: #0c0e1f;
+  --surface: rgba(11, 13, 32, .78); --surface-2: rgba(19, 22, 52, .62); --surface-3: rgba(28, 32, 74, .55);
+  --surface-solid: #0e1026; --field: rgba(4, 5, 14, .78);
+  --line: rgba(0, 240, 225, .17); --line-2: rgba(0, 240, 225, .34);
+  --edge-a: rgba(0, 240, 225, .65); --edge-b: rgba(255, 60, 200, .45);
+  --accent: #00e5d8; --accent-deep: #00a9c9; --accent-2: #ff3cc8; --accent-3: #7dff9b;
+  --on-accent: #03121a;
+  --glow: rgba(0, 229, 216, .5); --glow-2: rgba(255, 60, 200, .3);
+  --grad: linear-gradient(100deg, #00d2d3, #24f0c0);
+  --grad-soft: linear-gradient(100deg, rgba(0, 229, 216, .22), rgba(255, 60, 200, .1));
+  --grad-meter: linear-gradient(90deg, #7dff9b, #00e5d8);
+  --fg-2: #a4b4c4; --fg-3: #7b8c9e;
+}
+
+/* NOVA Midnight: the calmest theme for dark rooms, almost no glow */
+[data-nova-theme="midnight"] {
+  --bg-0: #05070e; --bg-1: #080b14; --bg-2: #0c101c;
+  --surface: rgba(13, 17, 29, .88); --surface-2: rgba(20, 25, 40, .75); --surface-3: rgba(30, 36, 56, .7);
+  --surface-solid: #0f1422; --field: rgba(5, 7, 14, .8);
+  --line: rgba(140, 150, 180, .13); --line-2: rgba(140, 150, 180, .25);
+  --edge-a: rgba(140, 150, 180, .22); --edge-b: rgba(140, 150, 180, .12);
+  --accent: #8d9dd6; --accent-deep: #4c5a93; --accent-2: #7fa8d9; --accent-3: #6fc7bd;
+  --glow: rgba(141, 157, 214, .14); --glow-2: rgba(127, 168, 217, .08);
+  --grad: linear-gradient(100deg, #434f85, #5c6aa6);
+  --grad-soft: linear-gradient(100deg, rgba(76, 90, 147, .3), rgba(92, 106, 166, .1));
+  --grad-meter: linear-gradient(90deg, #6fc7bd, #7fa8d9);
+  --fg-2: #a0a8bb; --fg-3: #7b8498;
+}
+
+/* NOVA Light: studio daylight, same structure, cool paper ground */
+[data-nova-theme="light"] {
+  color-scheme: light;
+  --bg-0: #e8ebf6; --bg-1: #eef0f9; --bg-2: #f5f6fc;
+  --surface: rgba(255, 255, 255, .8); --surface-2: rgba(240, 242, 251, .9); --surface-3: rgba(226, 230, 246, .95);
+  --surface-solid: #ffffff; --field: rgba(255, 255, 255, .95);
+  --line: rgba(66, 72, 130, .15); --line-2: rgba(66, 72, 130, .3);
+  --edge-a: rgba(96, 78, 226, .32); --edge-b: rgba(20, 140, 220, .2);
+  --fg: #171c33; --fg-2: #4b536e; --fg-3: #626b86;
+  --accent: #5a45e0; --accent-deep: #4c35d6; --accent-2: #0b7fc4; --accent-3: #0a8f88;
+  --glow: rgba(90, 69, 224, .2); --glow-2: rgba(11, 127, 196, .12);
+  --grad: linear-gradient(100deg, #4c35d6, #7a4fe8);
+  --grad-soft: linear-gradient(100deg, rgba(90, 69, 224, .16), rgba(122, 79, 232, .06));
+  --grad-meter: linear-gradient(90deg, #0a9f96, #18b070);
+  --good: #0a8a5c; --good-bg: rgba(10, 138, 92, .12);
+  --warn: #a86400; --warn-bg: rgba(168, 100, 0, .12);
+  --bad: #cf2439; --bad-bg: rgba(207, 36, 57, .1);
+  --star: #d98a00;
+}
+
+/* User overrides from the Skins screen */
+[data-cards="sharp"] { --r-card: 6px; --r-ctl: 5px; }
+[data-cards="round"] { --r-card: 24px; --r-ctl: 14px; }
+[data-icons="fine"] { --stroke: 1.3; }
+[data-icons="bold"] { --stroke: 2.2; }
+[data-density="compact"] { --pad: 11px; --row: 30px; }
+[data-density="comfy"] { --pad: 20px; --row: 42px; }

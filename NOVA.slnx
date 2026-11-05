@@ -1,0 +1,10 @@
+<Solution>
+  <Project Path="src/NOVA.Core/NOVA.Core.csproj" />
+  <Project Path="src/NOVA.Logging/NOVA.Logging.csproj" />
+  <Project Path="src/NOVA.DVB/NOVA.DVB.csproj" />
+  <Project Path="src/NOVA.DVB.Host/NOVA.DVB.Host.csproj" />
+  <Project Path="src/NOVA.Media/NOVA.Media.csproj" />
+  <Project Path="src/NOVA.Database/NOVA.Database.csproj" />
+  <Project Path="src/NOVA.UI/NOVA.UI.csproj" />
+  <Project Path="tests/NOVA.Tests/NOVA.Tests.csproj" />
+</Solution>

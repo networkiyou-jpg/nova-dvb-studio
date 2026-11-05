@@ -1,0 +1,15 @@
+const { chromium } = require('/opt/npm-tools/node_modules/playwright');
+const url='file:///home/claude/nova-dvb-studio/design/dist/nova-dvb-studio.html';
+(async () => { const b = await chromium.launch();
+  const shot = async (w,h,name,setup) => { const p = await b.newPage({ viewport:{width:w,height:h} }); await p.route(/fonts\.g/, r=>r.abort()); await p.goto(url); await p.waitForTimeout(300); if(setup) await p.evaluate(setup); await p.waitForTimeout(500); await p.screenshot({path:`test/out/${name}.png`}); const ov=await p.evaluate(()=>[document.documentElement.scrollWidth,innerWidth,document.body.scrollHeight,innerHeight]); console.log(name,ov); await p.close(); };
+  await shot(1672,941,'ref');
+  await shot(1280,800,'w1280');
+  await shot(1024,768,'w1024');
+  await shot(400,844,'w400');
+  await shot(400,844,'w400-ch',()=>go('channels'));
+  await shot(1440,900,'ar-live',()=>{S.lang='ar';renderAll();});
+  await shot(1440,900,'ar-sat',()=>{S.lang='ar';renderAll();go('satellites');A['tp-add']();});
+  await shot(1440,900,'light',()=>{S.theme.id='light';renderAll();});
+  await shot(1440,900,'nodev',()=>{S.mode='nodevice';renderAll();});
+  await shot(1440,900,'neon',()=>{S.theme.id='neon';renderAll();});
+  await b.close(); })();
