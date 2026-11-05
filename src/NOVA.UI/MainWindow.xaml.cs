@@ -1,5 +1,5 @@
 using System.IO;
-using System.Runtime.InteropServices;
+using System.Net.Http;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Windows;
@@ -23,7 +23,9 @@ public partial class MainWindow : Window
     private VideoWindow? _video;
     private TvPlayer? _player;
     private CoreWebView2? _core;
+    private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(45) };
     private bool _webReady, _fullscreen;
+    private WindowState _beforeFullscreen;
     private bool _muted = true;
     private int _volume = 40;
 
@@ -72,6 +74,8 @@ public partial class MainWindow : Window
 
         _video = new VideoWindow(this, Web);
         _player = new TvPlayer(_video.Handle, hardwareDecoding: true);
+        _video.FullscreenToggle += () => Post("{\"evt\":\"toggleFs\"}");
+        _player.VideoSizeKnown += (w, h) => Dispatcher.BeginInvoke(() => Post(new JsonObject { ["evt"] = "videoInfo", ["width"] = w, ["height"] = h }.ToJsonString()));
         _player.StateChanged += st => Dispatcher.BeginInvoke(() => Post(new JsonObject { ["evt"] = "player", ["state"] = st }.ToJsonString()));
         _engine.Start();
         _statsTimer.Start();
@@ -115,6 +119,7 @@ public partial class MainWindow : Window
                 break;
             case "videoRect":
                 _video?.SetRect((double)m["x"]!, (double)m["y"]!, (double)m["w"]!, (double)m["h"]!, (double)m["dpr"]!, (bool)m["show"]!);
+                _player?.SetWindowSize((int)(double)m["w"]!, (int)(double)m["h"]!);
                 break;
             case "play":
                 _player?.Play((int)m["sid"]!);
@@ -159,7 +164,10 @@ public partial class MainWindow : Window
                 Close();
                 break;
             case "fullscreen":
-                ToggleFullscreen();
+                SetFullscreen((bool)m["on"]!);
+                break;
+            case "fetchText":
+                _ = FetchAsync((string)m["url"]!);
                 break;
             case "saveFile":
                 SaveFile((string)m["name"]!, (string)m["text"]!);
@@ -195,12 +203,30 @@ public partial class MainWindow : Window
         Post(msg.ToJsonString());
     }
 
-    private void ToggleFullscreen()
+    private void SetFullscreen(bool on)
     {
-        _fullscreen = !_fullscreen;
+        if (on == _fullscreen) return;
+        _fullscreen = on;
+        if (on) _beforeFullscreen = WindowState;
         WindowState = WindowState.Normal;
-        ResizeMode = _fullscreen ? ResizeMode.NoResize : ResizeMode.CanResize;
-        WindowState = _fullscreen ? WindowState.Maximized : WindowState.Normal;
+        ResizeMode = on ? ResizeMode.NoResize : ResizeMode.CanResize;
+        Topmost = on;
+        WindowState = on ? WindowState.Maximized : _beforeFullscreen;
+    }
+
+    private async Task FetchAsync(string url)
+    {
+        var reply = new JsonObject { ["evt"] = "fetched", ["ok"] = false };
+        try
+        {
+            reply["text"] = await Http.GetStringAsync(url);
+            reply["ok"] = true;
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
+        {
+            Log.Warn($"Download failed: {ex.Message}");
+        }
+        Post(reply.ToJsonString());
     }
 
     private void SaveFile(string name, string text)

@@ -21,6 +21,9 @@ internal sealed class VideoWindow : Window
 
     public IntPtr Handle { get; }
 
+    /// <summary>Double-click on the picture, or Esc while it has focus.</summary>
+    public event Action? FullscreenToggle;
+
     public VideoWindow(Window owner, WebView2 host)
     {
         _host = host;
@@ -33,6 +36,8 @@ internal sealed class VideoWindow : Window
         Width = 16;
         Height = 9;
         Handle = new WindowInteropHelper(this).EnsureHandle();
+        MouseLeftButtonDown += (_, e) => { if (e.ClickCount == 2) FullscreenToggle?.Invoke(); };
+        KeyDown += (_, e) => { if (e.Key == System.Windows.Input.Key.Escape) FullscreenToggle?.Invoke(); };
     }
 
     public void SetRect(double x, double y, double w, double h, double dpr, bool show)

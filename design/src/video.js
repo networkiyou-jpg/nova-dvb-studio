@@ -206,6 +206,7 @@ const Audio_ = (() => {
   }
   return {
     sync() {
+      if (NATIVE) return;                        /* demo sound only: real audio comes from the player */
       const p = S.player, on = !p.muted && p.playing && S.mode === 'live';
       if (on) init();
       if (ac) { if (ac.state === 'suspended') ac.resume().catch(() => {}); gain.gain.setTargetAtTime(on ? p.vol / 100 * .5 : 0, ac.currentTime, .05); }

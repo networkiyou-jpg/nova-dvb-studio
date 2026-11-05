@@ -14,10 +14,55 @@ function arcSVG() {
     ${S.sats.map(s => { const x = X(lonOf(s)), y = Y(x), on = cur?.id === s.id; return `<g><title>${esc(satLabel(s))}</title><circle class="dot ${on ? 'on' : ''}" cx="${x}" cy="${y}" r="${on ? 7 : 5}" data-act="sat-pick" data-v="${s.id}"/>${on ? `<text class="lbl-on" x="${x}" y="${y - 13}" text-anchor="middle">${esc(s.name)}</text>` : ''}</g>`; }).join('')}
   </svg>`;
 }
+/* Satellite lists in the Enigma2 satellites.xml format. Keeps Ku-band transponders from 30W to 42E. */
+const SAT_LIST_URL = 'https://raw.githubusercontent.com/OpenPLi/tuxbox-xml/master/xml/satellites.xml';
+function parseSatXml(text) {
+  const doc = new DOMParser().parseFromString(text, 'application/xml');
+  if (doc.querySelector('parsererror') || !doc.querySelector('sat')) throw new Error('not a satellite list');
+  const POL = ['H', 'V', 'L', 'R'], FEC = ['Auto', '1/2', '2/3', '3/4', '5/6', '7/8', '8/9', '3/5', '4/5', '9/10', '6/7'];
+  const MOD = ['Auto', 'QPSK', '8PSK', 'QPSK', '16APSK', '32APSK'], RO = ['0.35', '0.25', '0.20'], PILOT = ['Off', 'On', 'Auto'];
+  const byPos = new Map();
+  $$('sat', doc).forEach(sat => {
+    const lon = Number(sat.getAttribute('position')) / 10;
+    if (!(lon >= -30 && lon <= 42)) return;
+    const name = (sat.getAttribute('name') || '').replace(/^[\d.]+[EW]\s+/, '').replace(/^(Ku|C)-band\s+/, '').trim();
+    $$('transponder', sat).forEach(t => {
+      const at = k => Number(t.getAttribute(k) || 0), freq = Math.round(at('frequency') / 1000);
+      if (freq < 10700 || freq > 12750 || t.getAttribute('is_id')) return;
+      const key = Math.round(lon * 10);
+      if (!byPos.has(key)) byPos.set(key, { name, lon, tps: new Map() });
+      const s2 = at('system') === 1, pol = POL[at('polarization')] || 'H', mod = MOD[at('modulation')] || 'QPSK';
+      byPos.get(key).tps.set(`${freq}${pol}`, { freq, pol, sr: Math.round(at('symbol_rate') / 1000), fec: FEC[at('fec_inner')] || 'Auto', mod: mod === 'Auto' ? 'QPSK' : mod, std: s2 ? 'DVB-S2' : 'DVB-S', ro: s2 ? RO[at('rolloff')] || '0.35' : '0.35', pilot: s2 ? PILOT[t.hasAttribute('pilot') ? at('pilot') : 2] : 'Off' });
+    });
+  });
+  return [...byPos.values()].map(s => ({ ...s, tps: [...s.tps.values()].sort((a, b) => a.freq - b.freq) }));
+}
+/* Replaces list entries but keeps each satellite's DiSEqC setup, transponders you added, and any in use by a channel. */
+function mergeSatList(list) {
+  let count = 0;
+  const used = (s, p) => S.channels.some(c => c.sat === s.id && c.f === p.freq && c.p === p.pol);
+  list.forEach(n => {
+    const dir = n.lon < 0 ? 'W' : 'E', pos = Math.abs(n.lon);
+    let s = S.sats.find(x => Math.abs(lonOf(x) - n.lon) < 0.25);
+    if (!s) { s = { id: `sat${Math.round(n.lon * 10)}`, name: n.name, pos, dir, tps: [] }; S.sats.push(s); }
+    s.name = n.name; s.pos = pos; s.dir = dir;
+    const keep = s.tps.filter(p => (p.u || used(s, p)) && !n.tps.some(q => q.freq === p.freq && q.pol === p.pol));
+    s.tps = [...n.tps.map((p, i) => ({ id: `${s.id}t${p.freq}${p.pol}`, ...p })), ...keep].sort((a, b) => a.freq - b.freq);
+    count += n.tps.length;
+  });
+  save();
+  return { sats: list.length, tps: count };
+}
+function applySatXml(text) {
+  const r = mergeSatList(parseSatXml(text));
+  S.satListAt = Date.now();
+  save();
+  return r;
+}
 SCREENS.satellites = () => {
   const s = curSat();
   return `<div class="page">${pageHead('sat', 'Satellite Manager', 'Satellites and transponders stored on this computer. Entries here are examples to check before use.',
-    `<button class="btn" data-act="sat-import">${ic('upload')}${t('Import')}</button><button class="btn" data-act="sat-export">${ic('download')}${t('Export')}</button><button class="btn primary" data-act="sat-add">${ic('plus')}${t('Add satellite')}</button>`)}
+    `${NATIVE ? `<button class="btn" data-act="sat-update">${ic('refresh')}${t('Update from internet')}</button>` : ''}<button class="btn" data-act="sat-import">${ic('upload')}${t('Import')}</button><button class="btn" data-act="sat-export">${ic('download')}${t('Export')}</button><button class="btn primary" data-act="sat-add">${ic('plus')}${t('Add satellite')}</button>`)}
     <section class="card pane" style="padding-block:6px 4px">${arcSVG()}</section>
     <div class="panes" style="grid-template-columns:300px minmax(0,1fr)">
       <section class="card pane"><div class="card-head">${ic('sat')}<h2>${t('Satellites')}</h2><span class="sub">(${S.sats.length})</span></div>
@@ -71,7 +116,7 @@ function tpModal(tp) {
     setErr(m, 'sr', rok ? '' : t('Enter a symbol rate from 1000 to 67500.'));
     if (!fok || !rok) return;
     const data = { freq: f, pol: v.pol, sr: r, fec: v.fec, mod: v.std === 'DVB-S' ? 'QPSK' : v.mod, std: v.std, ro: v.std === 'DVB-S' ? '0.35' : v.ro, pilot: v.std === 'DVB-S' ? 'Off' : v.pilot };
-    if (tp) Object.assign(tp, data); else s.tps.push({ id: uid('tp'), ...data });
+    if (tp) Object.assign(tp, data, { u: 1 }); else s.tps.push({ id: uid('tp'), u: 1, ...data });
     s.tps.sort((a, b) => a.freq - b.freq);
     save(); closeModal(); refresh(); toast(t('Transponder saved'), 'good');
   };
@@ -88,9 +133,15 @@ A['tp-edit'] = el => tpModal(curSat().tps.find(p => p.id === el.dataset.v));
 A['tp-del'] = el => { const s = curSat(); confirmBox({ title: t('Delete transponder?'), msg: t('Channels on this transponder keep their records until you rescan.'), yes: t('Delete'), onYes: () => { s.tps = s.tps.filter(p => p.id !== el.dataset.v); save(); refresh(); } }); };
 A['sat-export'] = () => saveFile('nova-satellites.json', JSON.stringify({ app: 'NOVA DVB Studio', kind: 'satellites', sats: S.sats }, null, 2));
 A['sat-import'] = async () => {
-  const [f] = await pickFiles('.json,application/json'); if (!f) return;
+  const [f] = await pickFiles('.json,.xml,application/json,text/xml'); if (!f) return;
   try {
-    const d = JSON.parse(await readText(f));
+    const text = await readText(f);
+    if (text.trimStart().startsWith('<')) {
+      const r = applySatXml(text);
+      refresh(); toast(`${r.sats} ${t('satellites')}, ${r.tps} ${t('transponders')}`, 'good');
+      return;
+    }
+    const d = JSON.parse(text);
     if (!Array.isArray(d.sats)) throw new Error('shape');
     let added = 0;
     d.sats.forEach(s => { if (s.name && Array.isArray(s.tps) && typeof s.pos === 'number') { S.sats.push({ ...s, id: uid('sat') }); added++; } });

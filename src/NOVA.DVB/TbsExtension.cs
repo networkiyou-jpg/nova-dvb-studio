@@ -22,7 +22,7 @@ internal sealed class TbsExtension : IVendorExtension
     private const int OffMode = 0, OffTone = 4, OffLnb = 12, OffTx = 16, OffTxLen = 144;
     private const int MaxDiseqc = 0x80;
     private const int ToneOff = 0, ToneOn = 1, PowerOff = 0, PowerOn = 3;
-    private const int ModNbcQpsk = 31, ModNbc8Psk = 32, ModQpsk = 20;
+    private const int ModNbcQpsk = 31, ModNbc8Psk = 32, ModQpsk = 20, Mod16Apsk = 29, Mod32Apsk = 30;
 
     private readonly IKsPropertySet _props;
     private readonly IntPtr _buffer;
@@ -127,7 +127,7 @@ internal sealed class TbsExtension : IVendorExtension
     {
         bool s2 = r.Std != "DVB-S";
         if (!s2) return ModQpsk;
-        return r.Mod == "QPSK" ? ModNbcQpsk : ModNbc8Psk;
+        return r.Mod switch { "QPSK" => ModNbcQpsk, "16APSK" => Mod16Apsk, "32APSK" => Mod32Apsk, _ => ModNbc8Psk };
     }
 
     public static int RollOffCode(string v) => v switch { "0.20" => 0, "0.25" => 1, "0.35" => 2, _ => 0xFF };

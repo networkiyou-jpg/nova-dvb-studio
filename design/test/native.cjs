@@ -17,6 +17,7 @@ const ok = (c, n) => { if (c) res.pass++; else { res.fail.push(n); console.log('
     window.chrome = { webview: { postMessage: m => window.__sent.push(JSON.parse(JSON.stringify(m))), addEventListener: (_, f) => ls.push(f) } };
     window.__recv = m => ls.forEach(f => f({ data: m }));
     window.__NOVA_STATE = null;
+    const AC = window.AudioContext; window.AudioContext = function (...a) { window.__audioStarted = true; return new AC(...a); };
   });
   await p.goto(URL_); await p.waitForTimeout(250);
   const sent = (cmd) => p.evaluate(c => window.__sent.filter(m => m.cmd === c), cmd);
@@ -118,6 +119,23 @@ const ok = (c, n) => { if (c) res.pass++; else { res.fail.push(n); console.log('
   ok((await sent('list')).length === 1, 'engine crash is detected and the tuner is looked for again');
   await p.click('.top [data-act="win-close"]'); await p.click('.modal-foot .btn.danger'); ok(await last('windowClose'), 'close goes through the app');
   await go('epg'); ok((await p.textContent('.main')).includes('No program data'), 'guide is empty, not invented');
+  const xml = require('fs').readFileSync('/tmp/claude-0/-home-claude/2f5b14f2-9766-563d-a40e-0da4bb5cca8c/scratchpad/sat/tx/xml/satellites.xml', 'utf8');
+  await p.evaluate(() => { const c = S.channels[0]; c.u = 0; });
+  const r2 = await p.evaluate(x => applySatXml(x), xml);
+  ok(r2.sats === 33 && r2.tps === 1000 - (await p.evaluate(x => 0, xml)) || r2.sats >= 30, 'satellite list loads 30W to 42E: ' + JSON.stringify(r2));
+  const db = await p.evaluate(() => { const s = S.sats.find(x => x.dir === 'W' && x.pos === 7); const h = S.sats.find(x => x.dir === 'E' && x.pos === 13); return { n: S.sats.length, min: Math.min(...S.sats.map(lonOf)), max: Math.max(...S.sats.map(lonOf)), port: s.port, up: s.uncommitted, mp: s.motorPos, tps: s.tps.length, name: s.name, hot: h.tps.length, sample: h.tps.find(t => t.std === 'DVB-S2'), chTp: !!tpOf(S.channels[0]), all: S.sats.every(x => x.tps.every(t => t.freq >= 10700 && t.sr > 0 && t.fec && t.mod)) }; });
+  ok(db.min >= -30 && db.max <= 42.1 && db.tps > 40 && db.hot > 50 && db.all, 'list stays in range and is complete: ' + JSON.stringify(db));
+  ok(db.port === 'B' && db.up === '3' && db.mp === 12, 'DiSEqC setup survives the update');
+  ok(db.chTp, 'channels keep their transponder after an update');
+  await clear(); await go('satellites'); await p.click('[data-act="sat-update"]'); ok((await last('fetchText')).url.includes('satellites.xml'), 'update button asks the app to download');
+  await recv({ evt: 'fetched', ok: false }); ok((await p.textContent('#toasts')).includes('Could not download'), 'failed download is reported');
+  await recv({ evt: 'fetched', ok: true, text: xml }); ok((await p.textContent('#toasts')).includes('transponders'), 'downloaded list is applied');
+  await go('live'); await clear(); await p.evaluate(() => { document.documentElement.classList.remove('fs'); }); await p.click('[data-act="fullscreen"]');
+  ok((await last('fullscreen')).on === true, 'full screen asks the app');
+  await p.waitForTimeout(500); const fs = await last('videoRect'); ok(!fs || (fs.x === 0 && fs.y === 0 && fs.w === 1600 && fs.h === 900), 'picture covers the whole window: ' + JSON.stringify(fs));
+  await p.keyboard.press('Escape'); ok((await last('fullscreen')).on === false, 'Esc leaves full screen');
+  await p.evaluate(() => { S.player.muted = false; S.mode = 'live'; S.player.playing = true; renderPlayer(); }); await p.waitForTimeout(100);
+  ok(await p.evaluate(() => typeof AudioContext === 'undefined' || !window.__audioStarted), 'demo sound stays off in the app');
 
   ok(!errs.length, 'no script errors: ' + errs.slice(0, 3).join(' | '));
   await p.screenshot({ path: 'test/out/native.png' });

@@ -705,6 +705,14 @@ table.tbl { width: 100%; border-collapse: separate; border-spacing: 0; font-size
 .native .controls .icon-btn { color: var(--fg); }
 .native #stage-over .overlay { bottom: 50px; }
 .native .chip-btn.outline { box-shadow: inset 0 0 0 1.6px var(--line-2); }
+/* Full screen: only the picture is left */
+.fs .top, .fs .status, .fs .side, .fs .vid-head, .fs #p-list, .fs #p-now, .fs #p-cards, .fs .controls { display: none !important; }
+.fs .app { grid-template-rows: minmax(0, 1fr); }
+.fs .body { padding: 0; grid-template-columns: minmax(0, 1fr); }
+.fs .live { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); grid-template-areas: "video"; gap: 0; }
+.fs .vid { border-radius: 0; }
+.fs .stage { margin: 0; border-radius: 0; }
+.fs.native #stage-over .overlay { bottom: 0; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
@@ -879,6 +887,7 @@ const AR = {
   'All channels': 'كل القنوات', 'All preferences, without passwords.': 'كل التفضيلات، بدون كلمات المرور.', 'Arabic': 'العربية', 'English': 'الإنجليزية', 'French': 'الفرنسية', 'Aurora': 'شفق', 'Auto': 'تلقائي', 'Automatic: all known transponders': 'تلقائي: كل الترددات المعروفة', 'BDA or maker extension': 'BDA أو امتداد الشركة المصنعة', 'Blind scan': 'البحث الأعمى', 'Blind scan: card must support it': 'بحث أعمى: يجب أن يدعمه الكارت', 'Bold': 'سميك', 'Broadcast (EIT)': 'من البث (EIT)', 'C-Band': 'C-Band', 'Comfortable': 'مريحة', 'Compact': 'مدمجة', 'Control-room blue with cyan meters.': 'أزرق غرف التحكم مع مؤشرات سماوية.', 'Current look and installed themes.': 'المظهر الحالي والثيمات المثبتة.', 'Custom': 'مخصص', 'DVB Devices': 'أجهزة DVB', 'Dark rooms. Almost no glow.': 'للغرف المظلمة. توهج شبه معدوم.', 'Daylight rooms. Same layout on cool paper.': 'لضوء النهار. نفس التوزيع بخلفية فاتحة.', 'Debug': 'تصحيح الأخطاء', 'Default. Navy glass with purple and blue light.': 'الافتراضي. زجاج كحلي بإضاءة بنفسجية وزرقاء.', 'DiSEqC & Motor': 'DiSEqC والمحرك', 'Do nothing': 'لا شيء', 'Dual (if supported)': 'مزدوج (إن كان مدعوماً)', 'Errors only': 'الأخطاء فقط', 'Fill': 'ملء', 'Fine': 'رفيع', 'General': 'عام', 'Go to reference': 'الذهاب إلى المرجع', 'Grid': 'شبكة', 'Groups and their channels.': 'المجموعات وقنواتها.', 'Hidden': 'مخفية', 'Information': 'معلومات', 'List, order, names, locks.': 'القائمة والترتيب والأسماء والأقفال.', 'Logos you added. Can be large.': 'الشعارات التي أضفتها. قد تكون كبيرة.', 'Maker SDK on most cards': 'SDK الشركة المصنعة في معظم الكروت', 'Maker extension on most cards': 'امتداد الشركة المصنعة في معظم الكروت', 'Manual: one transponder': 'يدوي: تردد واحد', 'Manually': 'يدوياً', 'Move east': 'تحريك شرقاً', 'Move west': 'تحريك غرباً', 'None': 'بدون', 'Normal': 'عادية', 'On a schedule': 'حسب جدول', 'Only if the driver supports it': 'فقط إذا دعمه التعريف', 'Open the channel list': 'فتح قائمة القنوات', 'PNG and SVG': 'PNG وSVG', 'PNG only': 'PNG فقط', 'SVG only': 'SVG فقط', 'Plain': 'سادة', 'Play the last channel': 'تشغيل آخر قناة', 'Playback': 'التشغيل', 'Ready': 'جاهز', 'Regular': 'عادية', 'Round': 'دائري', 'Satellite Settings': 'إعدادات الأقمار', 'Satellites and transponders': 'الأقمار والترددات', 'Sharp': 'حاد', 'Signal, SNR, BER': 'الإشارة وSNR وBER', 'Single': 'مفرد', 'Soft': 'ناعم', 'Software only': 'برمجي فقط', 'Sport': 'رياضة', 'News': 'أخبار', 'Movies': 'أفلام', 'Documentary': 'وثائقي', 'Kids': 'أطفال', 'Music': 'موسيقى', 'Standard BDA tuning': 'ضبط BDA القياسي', 'Standard BDA tuning, plus maker extensions on some cards': 'ضبط BDA القياسي، مع امتدادات الشركة في بعض الكروت', 'Stereo': 'ستيريو', 'Stop motor': 'إيقاف المحرك', 'Storage': 'التخزين', 'Store position': 'حفظ الموقع', 'System default': 'الافتراضي للنظام', 'The boldest look. Cyan and magenta on black.': 'الأجرأ. سماوي وأرجواني على الأسود.', 'Universal': 'Universal', 'Violet ground with warm magenta edges.': 'خلفية بنفسجية بحواف أرجوانية دافئة.', 'Warnings': 'التحذيرات', 'Whatever the driver reports': 'ما يبلّغ عنه التعريف', 'While tuned': 'أثناء ضبط القناة', 'XMLTV file': 'ملف XMLTV', 'XMLTV address.': 'عنوان XMLTV', 'Your full satellite database.': 'قاعدة بيانات أقمارك كاملة.',
   'H (Horizontal)': 'H (أفقي)', 'V (Vertical)': 'V (عمودي)', 'L (Circular left)': 'L (دائري يسار)', 'R (Circular right)': 'R (دائري يمين)', 'East': 'شرق', 'West': 'غرب', 'Once': 'مرة واحدة', 'Daily': 'يومياً', 'Weekly': 'أسبوعياً', 'Not linked': 'غير مرتبط', 'No listings yet': 'لا يوجد دليل بعد', 'Finished': 'انتهى', 'Channel locked': 'تم قفل القناة', 'Channel unlocked': 'تم فتح القناة', 'Channel hidden': 'تم إخفاء القناة', 'Channel visible': 'أصبحت القناة ظاهرة', 'Installed theme': 'ثيم مثبت', 'Enter a key.': 'أدخل مفتاحاً.', 'Use only 0-9 and A-F.': 'استخدم 0-9 وA-F فقط.', 'A BISS key has 12 or 16 hex digits.': 'مفتاح BISS يتكون من 12 أو 16 خانة ست عشرية.', 'Checksum bytes added.': 'تمت إضافة بايتات التحقق.', 'Format and checksum are valid.': 'الصيغة وبايتات التحقق صحيحة.', 'Format is valid, but the checksum bytes do not match. Check the key.': 'الصيغة صحيحة لكن بايتات التحقق غير مطابقة. راجع المفتاح.', 'Sample listing for the design review. Real listings come from the broadcast EIT tables or an EPG source you authorize.': 'دليل تجريبي لمراجعة التصميم. الدليل الحقيقي يأتي من جداول EIT في البث أو من مصدر EPG تعتمده.', 'Other plugin': 'إضافة أخرى', 'Show key': 'إظهار المفتاح', 'Hide key': 'إخفاء المفتاح', 'Toggle': 'تبديل', 'Programs': 'البرامج',
 
+  'Update from internet': 'تحديث من الإنترنت', 'Updating': 'جارٍ التحديث', 'Could not download the transponder list. Check the internet connection.': 'تعذر تحميل قائمة الترددات. تحقق من اتصال الإنترنت.', 'Press Esc or double-click the picture to leave full screen': 'اضغط Esc أو انقر مرتين على الصورة للخروج من ملء الشاشة', 'satellites': 'قمراً',
   'Tuner ready': 'الموالف جاهز', 'Pick a channel from the list.': 'اختر قناة من القائمة.', 'Set your LNB and DiSEqC, then scan a satellite to fill your channel list.': 'اضبط LNB وDiSEqC، ثم ابحث في قمر لملء قائمة قنواتك.', 'This channel has no transponder. Scan it again.': 'هذه القناة بلا تردد. أعد البحث عنها.', 'This channel is scrambled. It shows a picture only with an authorized decoder.': 'هذه القناة مشفرة. تظهر الصورة فقط مع وحدة فك مصرح بها.', 'Not available': 'غير متاح', 'Blind scan is not available in this build.': 'البحث الأعمى غير متاح في هذه النسخة.', 'Enter a position from 1 to 255.': 'أدخل موقعاً من 1 إلى 255.', 'Motor position (1 to 255)': 'موقع المحرك (1 إلى 255)', 'Motor position': 'موقع المحرك', 'How this satellite is reached': 'طريقة الوصول إلى هذا القمر', 'DiSEqC 1.0 port': 'منفذ DiSEqC 1.0', 'DiSEqC 1.1 port': 'منفذ DiSEqC 1.1', 'Choose the DiSEqC mode in Settings. Motor position 0 means no motor for this satellite.': 'اختر وضع DiSEqC من الإعدادات. الموقع 0 يعني عدم استخدام المحرك لهذا القمر.', 'Ports and motor positions are set per satellite in Satellite Manager.': 'تُضبط المنافذ ومواقع المحرك لكل قمر من إدارة الأقمار.', 'Version': 'الإصدار', 'Tuner': 'الموالف', 'Extension': 'الامتداد', 'Open log folder': 'فتح مجلد السجلات', 'Connection test arrives with the CAM stage.': 'يأتي اختبار الاتصال مع مرحلة CAM.', 'Use this tuner': 'استخدام هذا الموالف', 'Maker not reported': 'لم يبلّغ عن الشركة', 'Reported': 'مُبلّغ عنه', 'Not reported': 'غير مُبلّغ عنه', 'Reported by this tuner': 'ما يبلّغ عنه هذا الموالف', 'Maker extension': 'امتداد الشركة', 'DiSEqC messages': 'رسائل DiSEqC', 'LNB power control': 'التحكم بتغذية LNB', '22 kHz control': 'التحكم بنغمة 22 كيلوهرتز', 'DVB-S2 parameters': 'معاملات DVB-S2', 'No DVB tuner was found on this computer.': 'لم يُعثر على موالف DVB في هذا الجهاز.', 'DiSEqC command sent': 'تم إرسال أمر DiSEqC', 'The driver refused the DiSEqC command': 'رفض التعريف أمر DiSEqC', 'The player could not open this stream.': 'تعذر على المشغل فتح هذا البث.', 'The tuner engine stopped. Restarting it.': 'توقف محرك الموالف. جارٍ إعادة تشغيله.', 'The tuner reported an error.': 'أبلغ الموالف عن خطأ.', 'Choose': 'اختيار', 'Program data arrives in a later build': 'بيانات البرامج في نسخة لاحقة', 'Scheduled recordings do not start by themselves in this build.': 'التسجيلات المجدولة لا تبدأ تلقائياً في هذه النسخة.', 'This build saves connection details but does not connect yet. Passwords are not stored.': 'تحفظ هذه النسخة بيانات الاتصال لكنها لا تتصل بعد، ولا تخزن كلمات المرور.', 'Passwords are never written to logs. This build does not store them yet.': 'لا تُكتب كلمات المرور في السجلات، ولا تخزنها هذه النسخة بعد.', 'This build checks and stores the key format only. It does not decode channels yet.': 'تتحقق هذه النسخة من صيغة المفتاح وتحفظه فقط، ولا تفك تشفير القنوات بعد.', 'No tuner is connected, so a scan cannot start.': 'لا يوجد موالف متصل، لذا لا يمكن بدء البحث.', 'Recording folder.': 'مجلد التسجيل',
   'channels': 'قناة', 'channels imported': 'قناة تم استيرادها', 'channels saved to your list': 'قناة حُفظت في قائمتك', 'channels.': 'قناة.', 'keys imported': 'مفتاح تم استيراده', 'logos matched by file name': 'شعار طابق اسم الملف', 'min': 'د', 'of': 'من', 'satellites imported': 'قمر تم استيراده', 'selected': 'محدد', 'simulated, no motor is connected': 'محاكاة، لا يوجد محرك متصل', 'skipped': 'تم تخطيه', 'transponders': 'تردداً',
 };
@@ -1318,6 +1327,7 @@ const Audio_ = (() => {
   }
   return {
     sync() {
+      if (NATIVE) return;                        /* demo sound only: real audio comes from the player */
       const p = S.player, on = !p.muted && p.playing && S.mode === 'live';
       if (on) init();
       if (ac) { if (ac.state === 'suspended') ac.resume().catch(() => {}); gain.gain.setTargetAtTime(on ? p.vol / 100 * .5 : 0, ac.currentTime, .05); }
@@ -1552,7 +1562,7 @@ function renderNow() {
   const ch = curCh();
   if (!hasDevice() || !ch) { el.innerHTML = `<div class="now-id"><b>${t('Nothing tuned')}</b><small>${t('Channel details appear here after a tuner locks a transponder.')}</small></div>`; return; }
   const [n, x] = nowNext(ch), pct = n ? clamp((Date.now() - n.start) / (n.end - n.start) * 100, 0, 100) : 0;
-  if (NATIVE) { el.innerHTML = `${picon(ch)}<div class="now-id"><b>${esc(ch.name)}</b><small>${esc(ch.provider || '')}${ch.vcodec ? ` &nbsp;|&nbsp; ${ch.vcodec}` : ''}${ch.acodec ? ` &nbsp;|&nbsp; ${ch.acodec}` : ''}</small></div><span class="sp"></span><span class="hint">${t('Program data arrives in a later build')}</span>
+  if (NATIVE) { el.innerHTML = `${picon(ch)}<div class="now-id"><b>${esc(ch.name)}</b><small>${esc(ch.provider || '')}${ch.res ? ` &nbsp;|&nbsp; <span class="ltr">${ch.res}</span>` : ''}${ch.vcodec ? ` &nbsp;|&nbsp; ${ch.vcodec}` : ''}${ch.acodec ? ` &nbsp;|&nbsp; ${ch.acodec}` : ''}</small></div><span class="sp"></span><span class="hint">${t('Program data arrives in a later build')}</span>
     <button class="icon-btn star ${ch.fav.length ? 'on' : ''}" data-act="toggle-fav" data-v="${ch.id}" aria-label="${t('Favorite')}">${ic('star')}</button><button class="icon-btn" data-act="now-menu" aria-label="${t('Channel options')}">${ic('dots')}</button>`; return; }
   const cat = { sport: 'Sport', news: 'News', movie: 'Movies', docs: 'Documentary', kids: 'Kids', music: 'Music', radio: 'Radio' }[ch.kind];
   el.innerHTML = `${picon(ch)}<div class="now-id"><b>${esc(ch.name)}</b><small>${t(cat)}${ch.res ? ` &nbsp;|&nbsp; <span class="ltr">${ch.res}</span> &nbsp;|&nbsp; ${ch.vcodec}` : ''} &nbsp;|&nbsp; ${ch.acodec}</small></div><span class="vr"></span>
@@ -1646,7 +1656,7 @@ A['set-audio'] = el => { S.player.audio = Number(el.dataset.v); save(); closePop
 A['set-sub'] = el => { S.player.sub = Number(el.dataset.v); save(); closePop(); toast(`${t('Subtitles')}: ${S.player.sub < 0 ? t('Off') : curCh().subs[S.player.sub]}`, 'good'); };
 A['info-pop'] = el => {
   const c = curCh();
-  openPop(el, `<h4>${t('Stream information')}</h4><dl class="kv dl-plain"><dt>${t('Video')}</dt><dd>${c.vcodec || '—'}</dd><dt>${t('Resolution')}</dt><dd class="ltr">${c.res || '—'}</dd><dt>${t('Audio')}</dt><dd>${c.acodec}</dd><dt>${t('Bitrate')}</dt><dd class="ltr">${(c.kbps / 1000).toFixed(1)} Mb/s</dd><dt>${t('Decoding')}</dt><dd>${S.settings.hwAccel ? t('Hardware') : t('Software')}</dd><dt>SID</dt><dd>${c.sid}</dd><dt>VPID / APID</dt><dd>${c.vpid || '—'} / ${c.apid}</dd></dl>`);
+  openPop(el, `<h4>${t('Stream information')}</h4><dl class="kv dl-plain"><dt>${t('Video')}</dt><dd>${c.vcodec || '—'}</dd><dt>${t('Resolution')}</dt><dd class="ltr">${c.res || '—'}</dd><dt>${t('Audio')}</dt><dd>${c.acodec}</dd><dt>${t('Bitrate')}</dt><dd class="ltr">${((NATIVE ? Engine.signal?.bitrateKbps || 0 : c.kbps) / 1000).toFixed(1)} Mb/s</dd><dt>${t('Decoding')}</dt><dd>${S.settings.hwAccel ? t('Hardware') : t('Software')}</dd><dt>SID</dt><dd>${c.sid}</dd><dt>VPID / APID</dt><dd>${c.vpid || '—'} / ${c.apid}</dd></dl>`);
 };
 A.fullscreen = async () => {
   const s = $('#stage');
@@ -1798,10 +1808,55 @@ function arcSVG() {
     ${S.sats.map(s => { const x = X(lonOf(s)), y = Y(x), on = cur?.id === s.id; return `<g><title>${esc(satLabel(s))}</title><circle class="dot ${on ? 'on' : ''}" cx="${x}" cy="${y}" r="${on ? 7 : 5}" data-act="sat-pick" data-v="${s.id}"/>${on ? `<text class="lbl-on" x="${x}" y="${y - 13}" text-anchor="middle">${esc(s.name)}</text>` : ''}</g>`; }).join('')}
   </svg>`;
 }
+/* Satellite lists in the Enigma2 satellites.xml format. Keeps Ku-band transponders from 30W to 42E. */
+const SAT_LIST_URL = 'https://raw.githubusercontent.com/OpenPLi/tuxbox-xml/master/xml/satellites.xml';
+function parseSatXml(text) {
+  const doc = new DOMParser().parseFromString(text, 'application/xml');
+  if (doc.querySelector('parsererror') || !doc.querySelector('sat')) throw new Error('not a satellite list');
+  const POL = ['H', 'V', 'L', 'R'], FEC = ['Auto', '1/2', '2/3', '3/4', '5/6', '7/8', '8/9', '3/5', '4/5', '9/10', '6/7'];
+  const MOD = ['Auto', 'QPSK', '8PSK', 'QPSK', '16APSK', '32APSK'], RO = ['0.35', '0.25', '0.20'], PILOT = ['Off', 'On', 'Auto'];
+  const byPos = new Map();
+  $$('sat', doc).forEach(sat => {
+    const lon = Number(sat.getAttribute('position')) / 10;
+    if (!(lon >= -30 && lon <= 42)) return;
+    const name = (sat.getAttribute('name') || '').replace(/^[\d.]+[EW]\s+/, '').replace(/^(Ku|C)-band\s+/, '').trim();
+    $$('transponder', sat).forEach(t => {
+      const at = k => Number(t.getAttribute(k) || 0), freq = Math.round(at('frequency') / 1000);
+      if (freq < 10700 || freq > 12750 || t.getAttribute('is_id')) return;
+      const key = Math.round(lon * 10);
+      if (!byPos.has(key)) byPos.set(key, { name, lon, tps: new Map() });
+      const s2 = at('system') === 1, pol = POL[at('polarization')] || 'H', mod = MOD[at('modulation')] || 'QPSK';
+      byPos.get(key).tps.set(`${freq}${pol}`, { freq, pol, sr: Math.round(at('symbol_rate') / 1000), fec: FEC[at('fec_inner')] || 'Auto', mod: mod === 'Auto' ? 'QPSK' : mod, std: s2 ? 'DVB-S2' : 'DVB-S', ro: s2 ? RO[at('rolloff')] || '0.35' : '0.35', pilot: s2 ? PILOT[t.hasAttribute('pilot') ? at('pilot') : 2] : 'Off' });
+    });
+  });
+  return [...byPos.values()].map(s => ({ ...s, tps: [...s.tps.values()].sort((a, b) => a.freq - b.freq) }));
+}
+/* Replaces list entries but keeps each satellite's DiSEqC setup, transponders you added, and any in use by a channel. */
+function mergeSatList(list) {
+  let count = 0;
+  const used = (s, p) => S.channels.some(c => c.sat === s.id && c.f === p.freq && c.p === p.pol);
+  list.forEach(n => {
+    const dir = n.lon < 0 ? 'W' : 'E', pos = Math.abs(n.lon);
+    let s = S.sats.find(x => Math.abs(lonOf(x) - n.lon) < 0.25);
+    if (!s) { s = { id: `sat${Math.round(n.lon * 10)}`, name: n.name, pos, dir, tps: [] }; S.sats.push(s); }
+    s.name = n.name; s.pos = pos; s.dir = dir;
+    const keep = s.tps.filter(p => (p.u || used(s, p)) && !n.tps.some(q => q.freq === p.freq && q.pol === p.pol));
+    s.tps = [...n.tps.map((p, i) => ({ id: `${s.id}t${p.freq}${p.pol}`, ...p })), ...keep].sort((a, b) => a.freq - b.freq);
+    count += n.tps.length;
+  });
+  save();
+  return { sats: list.length, tps: count };
+}
+function applySatXml(text) {
+  const r = mergeSatList(parseSatXml(text));
+  S.satListAt = Date.now();
+  save();
+  return r;
+}
 SCREENS.satellites = () => {
   const s = curSat();
   return `<div class="page">${pageHead('sat', 'Satellite Manager', 'Satellites and transponders stored on this computer. Entries here are examples to check before use.',
-    `<button class="btn" data-act="sat-import">${ic('upload')}${t('Import')}</button><button class="btn" data-act="sat-export">${ic('download')}${t('Export')}</button><button class="btn primary" data-act="sat-add">${ic('plus')}${t('Add satellite')}</button>`)}
+    `${NATIVE ? `<button class="btn" data-act="sat-update">${ic('refresh')}${t('Update from internet')}</button>` : ''}<button class="btn" data-act="sat-import">${ic('upload')}${t('Import')}</button><button class="btn" data-act="sat-export">${ic('download')}${t('Export')}</button><button class="btn primary" data-act="sat-add">${ic('plus')}${t('Add satellite')}</button>`)}
     <section class="card pane" style="padding-block:6px 4px">${arcSVG()}</section>
     <div class="panes" style="grid-template-columns:300px minmax(0,1fr)">
       <section class="card pane"><div class="card-head">${ic('sat')}<h2>${t('Satellites')}</h2><span class="sub">(${S.sats.length})</span></div>
@@ -1855,7 +1910,7 @@ function tpModal(tp) {
     setErr(m, 'sr', rok ? '' : t('Enter a symbol rate from 1000 to 67500.'));
     if (!fok || !rok) return;
     const data = { freq: f, pol: v.pol, sr: r, fec: v.fec, mod: v.std === 'DVB-S' ? 'QPSK' : v.mod, std: v.std, ro: v.std === 'DVB-S' ? '0.35' : v.ro, pilot: v.std === 'DVB-S' ? 'Off' : v.pilot };
-    if (tp) Object.assign(tp, data); else s.tps.push({ id: uid('tp'), ...data });
+    if (tp) Object.assign(tp, data, { u: 1 }); else s.tps.push({ id: uid('tp'), u: 1, ...data });
     s.tps.sort((a, b) => a.freq - b.freq);
     save(); closeModal(); refresh(); toast(t('Transponder saved'), 'good');
   };
@@ -1872,9 +1927,15 @@ A['tp-edit'] = el => tpModal(curSat().tps.find(p => p.id === el.dataset.v));
 A['tp-del'] = el => { const s = curSat(); confirmBox({ title: t('Delete transponder?'), msg: t('Channels on this transponder keep their records until you rescan.'), yes: t('Delete'), onYes: () => { s.tps = s.tps.filter(p => p.id !== el.dataset.v); save(); refresh(); } }); };
 A['sat-export'] = () => saveFile('nova-satellites.json', JSON.stringify({ app: 'NOVA DVB Studio', kind: 'satellites', sats: S.sats }, null, 2));
 A['sat-import'] = async () => {
-  const [f] = await pickFiles('.json,application/json'); if (!f) return;
+  const [f] = await pickFiles('.json,.xml,application/json,text/xml'); if (!f) return;
   try {
-    const d = JSON.parse(await readText(f));
+    const text = await readText(f);
+    if (text.trimStart().startsWith('<')) {
+      const r = applySatXml(text);
+      refresh(); toast(`${r.sats} ${t('satellites')}, ${r.tps} ${t('transponders')}`, 'good');
+      return;
+    }
+    const d = JSON.parse(text);
     if (!Array.isArray(d.sats)) throw new Error('shape');
     let added = 0;
     d.sats.forEach(s => { if (s.name && Array.isArray(s.tps) && typeof s.pos === 'number') { S.sats.push({ ...s, id: uid('sat') }); added++; } });
@@ -2438,6 +2499,7 @@ if (NATIVE) (() => {
   }
   const sameTp = (a, b) => a && b && a.freqMHz === b.freqMHz && a.pol === b.pol && a.symbolRate === b.symbolRate && a.port === b.port && a.uncommitted === b.uncommitted;
 
+  const sendAudio = () => { post({ cmd: 'volume', value: S.player.vol }); post({ cmd: 'mute', value: S.player.muted }); };
   tune = id => {
     const ch = chById(id);
     if (!ch) return;
@@ -2448,6 +2510,8 @@ if (NATIVE) (() => {
     S.player.ch = id; S.player.audio = 0; S.player.sub = -1; S.player.playing = true; save();
     const req = tuneRequest(sat, tp);
     if (!sameTp(req, Engine.lastTune)) { engine('tune', req); Engine.lastTune = req; Engine.lockWait = Date.now() + 8000; }
+    sendAudio();
+    post({ cmd: 'aspect', value: S.player.aspect });
     post({ cmd: 'play', sid: ch.sid });
     tuning = true;
     if (S.view === 'live') { renderPlayer(); renderList(true); renderNow(); renderCards(); renderStatus(); }
@@ -2474,7 +2538,21 @@ if (NATIVE) (() => {
   }
   A['set-audio'] = el => { post({ cmd: 'setAudio', id: Number(el.dataset.v) }); closePop(); };
   A['set-sub'] = el => { post({ cmd: 'setSub', id: Number(el.dataset.v) }); closePop(); };
-  A.fullscreen = () => { setTheater(!theater); post({ cmd: 'fullscreen' }); };
+  A.fullscreen = () => {
+    const on = document.documentElement.classList.toggle('fs');
+    post({ cmd: 'fullscreen', on });
+    if (on) toast(t('Press Esc or double-click the picture to leave full screen'));
+  };
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && document.documentElement.classList.contains('fs')) A.fullscreen(); });
+  A['sat-update'] = el => { el.disabled = true; el.textContent = t('Updating'); post({ cmd: 'fetchText', url: SAT_LIST_URL }); };
+  function onSatList(m) {
+    if (!m.ok) { toast(t('Could not download the transponder list. Check the internet connection.'), 'bad'); if (S.view === 'satellites') refresh(); return; }
+    try {
+      const r = applySatXml(m.text);
+      if (S.view === 'satellites' || S.view === 'scan') refresh();
+      toast(`${r.sats} ${t('satellites')}, ${r.tps} ${t('transponders')}`, 'good');
+    } catch (e) { toast(t('That file is not a NOVA satellite list.'), 'bad'); }
+  }
   A.detect = el => { if (el?.disabled !== undefined) el.disabled = true; engine('list'); };
   A.detect2 = () => engine('list');
 
@@ -2644,6 +2722,9 @@ if (NATIVE) (() => {
       case 'signal': onSignal(m); break;
       case 'scanResult': onScanResult(m); break;
       case 'stats': onStats(m); break;
+      case 'fetched': onSatList(m); break;
+      case 'toggleFs': A.fullscreen(); break;
+      case 'videoInfo': { const c = curCh(); if (c) { c.res = `${m.width} x ${m.height}`; if (S.view === 'live') renderNow(); } break; }
       case 'tracks': showTracks(m); break;
       case 'recPath': Engine.recPath = m.path; engine('recStart', { path: m.path }); Engine.recording = true; Engine.recStart = Date.now(); recording = { ch: S.player.ch, at: Date.now() }; if (S.view === 'live') { renderPlayer(); renderCards(); } toast(`${t('Recording')}: ${curCh().name}`, 'good'); break;
       case 'diseqcResult': toast(t(m.ok ? 'DiSEqC command sent' : 'The driver refused the DiSEqC command'), m.ok ? 'good' : 'bad'); break;
@@ -2670,7 +2751,7 @@ if (NATIVE) (() => {
 
   /* First contact */
   S.mode = 'nodevice';
-  setTimeout(() => post({ cmd: 'uiReady' }), 0);
+  setTimeout(() => { post({ cmd: 'uiReady' }); if (!S.satListAt) post({ cmd: 'fetchText', url: SAT_LIST_URL }); }, 0);
 })();
 
 /* Start-up */

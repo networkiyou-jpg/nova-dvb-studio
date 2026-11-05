@@ -225,7 +225,7 @@ function renderNow() {
   const ch = curCh();
   if (!hasDevice() || !ch) { el.innerHTML = `<div class="now-id"><b>${t('Nothing tuned')}</b><small>${t('Channel details appear here after a tuner locks a transponder.')}</small></div>`; return; }
   const [n, x] = nowNext(ch), pct = n ? clamp((Date.now() - n.start) / (n.end - n.start) * 100, 0, 100) : 0;
-  if (NATIVE) { el.innerHTML = `${picon(ch)}<div class="now-id"><b>${esc(ch.name)}</b><small>${esc(ch.provider || '')}${ch.vcodec ? ` &nbsp;|&nbsp; ${ch.vcodec}` : ''}${ch.acodec ? ` &nbsp;|&nbsp; ${ch.acodec}` : ''}</small></div><span class="sp"></span><span class="hint">${t('Program data arrives in a later build')}</span>
+  if (NATIVE) { el.innerHTML = `${picon(ch)}<div class="now-id"><b>${esc(ch.name)}</b><small>${esc(ch.provider || '')}${ch.res ? ` &nbsp;|&nbsp; <span class="ltr">${ch.res}</span>` : ''}${ch.vcodec ? ` &nbsp;|&nbsp; ${ch.vcodec}` : ''}${ch.acodec ? ` &nbsp;|&nbsp; ${ch.acodec}` : ''}</small></div><span class="sp"></span><span class="hint">${t('Program data arrives in a later build')}</span>
     <button class="icon-btn star ${ch.fav.length ? 'on' : ''}" data-act="toggle-fav" data-v="${ch.id}" aria-label="${t('Favorite')}">${ic('star')}</button><button class="icon-btn" data-act="now-menu" aria-label="${t('Channel options')}">${ic('dots')}</button>`; return; }
   const cat = { sport: 'Sport', news: 'News', movie: 'Movies', docs: 'Documentary', kids: 'Kids', music: 'Music', radio: 'Radio' }[ch.kind];
   el.innerHTML = `${picon(ch)}<div class="now-id"><b>${esc(ch.name)}</b><small>${t(cat)}${ch.res ? ` &nbsp;|&nbsp; <span class="ltr">${ch.res}</span> &nbsp;|&nbsp; ${ch.vcodec}` : ''} &nbsp;|&nbsp; ${ch.acodec}</small></div><span class="vr"></span>
@@ -319,7 +319,7 @@ A['set-audio'] = el => { S.player.audio = Number(el.dataset.v); save(); closePop
 A['set-sub'] = el => { S.player.sub = Number(el.dataset.v); save(); closePop(); toast(`${t('Subtitles')}: ${S.player.sub < 0 ? t('Off') : curCh().subs[S.player.sub]}`, 'good'); };
 A['info-pop'] = el => {
   const c = curCh();
-  openPop(el, `<h4>${t('Stream information')}</h4><dl class="kv dl-plain"><dt>${t('Video')}</dt><dd>${c.vcodec || '—'}</dd><dt>${t('Resolution')}</dt><dd class="ltr">${c.res || '—'}</dd><dt>${t('Audio')}</dt><dd>${c.acodec}</dd><dt>${t('Bitrate')}</dt><dd class="ltr">${(c.kbps / 1000).toFixed(1)} Mb/s</dd><dt>${t('Decoding')}</dt><dd>${S.settings.hwAccel ? t('Hardware') : t('Software')}</dd><dt>SID</dt><dd>${c.sid}</dd><dt>VPID / APID</dt><dd>${c.vpid || '—'} / ${c.apid}</dd></dl>`);
+  openPop(el, `<h4>${t('Stream information')}</h4><dl class="kv dl-plain"><dt>${t('Video')}</dt><dd>${c.vcodec || '—'}</dd><dt>${t('Resolution')}</dt><dd class="ltr">${c.res || '—'}</dd><dt>${t('Audio')}</dt><dd>${c.acodec}</dd><dt>${t('Bitrate')}</dt><dd class="ltr">${((NATIVE ? Engine.signal?.bitrateKbps || 0 : c.kbps) / 1000).toFixed(1)} Mb/s</dd><dt>${t('Decoding')}</dt><dd>${S.settings.hwAccel ? t('Hardware') : t('Software')}</dd><dt>SID</dt><dd>${c.sid}</dd><dt>VPID / APID</dt><dd>${c.vpid || '—'} / ${c.apid}</dd></dl>`);
 };
 A.fullscreen = async () => {
   const s = $('#stage');

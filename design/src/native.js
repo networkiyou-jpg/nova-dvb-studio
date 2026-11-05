@@ -21,6 +21,7 @@ if (NATIVE) (() => {
   }
   const sameTp = (a, b) => a && b && a.freqMHz === b.freqMHz && a.pol === b.pol && a.symbolRate === b.symbolRate && a.port === b.port && a.uncommitted === b.uncommitted;
 
+  const sendAudio = () => { post({ cmd: 'volume', value: S.player.vol }); post({ cmd: 'mute', value: S.player.muted }); };
   tune = id => {
     const ch = chById(id);
     if (!ch) return;
@@ -31,6 +32,8 @@ if (NATIVE) (() => {
     S.player.ch = id; S.player.audio = 0; S.player.sub = -1; S.player.playing = true; save();
     const req = tuneRequest(sat, tp);
     if (!sameTp(req, Engine.lastTune)) { engine('tune', req); Engine.lastTune = req; Engine.lockWait = Date.now() + 8000; }
+    sendAudio();
+    post({ cmd: 'aspect', value: S.player.aspect });
     post({ cmd: 'play', sid: ch.sid });
     tuning = true;
     if (S.view === 'live') { renderPlayer(); renderList(true); renderNow(); renderCards(); renderStatus(); }
@@ -57,7 +60,21 @@ if (NATIVE) (() => {
   }
   A['set-audio'] = el => { post({ cmd: 'setAudio', id: Number(el.dataset.v) }); closePop(); };
   A['set-sub'] = el => { post({ cmd: 'setSub', id: Number(el.dataset.v) }); closePop(); };
-  A.fullscreen = () => { setTheater(!theater); post({ cmd: 'fullscreen' }); };
+  A.fullscreen = () => {
+    const on = document.documentElement.classList.toggle('fs');
+    post({ cmd: 'fullscreen', on });
+    if (on) toast(t('Press Esc or double-click the picture to leave full screen'));
+  };
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && document.documentElement.classList.contains('fs')) A.fullscreen(); });
+  A['sat-update'] = el => { el.disabled = true; el.textContent = t('Updating'); post({ cmd: 'fetchText', url: SAT_LIST_URL }); };
+  function onSatList(m) {
+    if (!m.ok) { toast(t('Could not download the transponder list. Check the internet connection.'), 'bad'); if (S.view === 'satellites') refresh(); return; }
+    try {
+      const r = applySatXml(m.text);
+      if (S.view === 'satellites' || S.view === 'scan') refresh();
+      toast(`${r.sats} ${t('satellites')}, ${r.tps} ${t('transponders')}`, 'good');
+    } catch (e) { toast(t('That file is not a NOVA satellite list.'), 'bad'); }
+  }
   A.detect = el => { if (el?.disabled !== undefined) el.disabled = true; engine('list'); };
   A.detect2 = () => engine('list');
 
@@ -227,6 +244,9 @@ if (NATIVE) (() => {
       case 'signal': onSignal(m); break;
       case 'scanResult': onScanResult(m); break;
       case 'stats': onStats(m); break;
+      case 'fetched': onSatList(m); break;
+      case 'toggleFs': A.fullscreen(); break;
+      case 'videoInfo': { const c = curCh(); if (c) { c.res = `${m.width} x ${m.height}`; if (S.view === 'live') renderNow(); } break; }
       case 'tracks': showTracks(m); break;
       case 'recPath': Engine.recPath = m.path; engine('recStart', { path: m.path }); Engine.recording = true; Engine.recStart = Date.now(); recording = { ch: S.player.ch, at: Date.now() }; if (S.view === 'live') { renderPlayer(); renderCards(); } toast(`${t('Recording')}: ${curCh().name}`, 'good'); break;
       case 'diseqcResult': toast(t(m.ok ? 'DiSEqC command sent' : 'The driver refused the DiSEqC command'), m.ok ? 'good' : 'bad'); break;
@@ -253,5 +273,5 @@ if (NATIVE) (() => {
 
   /* First contact */
   S.mode = 'nodevice';
-  setTimeout(() => post({ cmd: 'uiReady' }), 0);
+  setTimeout(() => { post({ cmd: 'uiReady' }); if (!S.satListAt) post({ cmd: 'fetchText', url: SAT_LIST_URL }); }, 0);
 })();

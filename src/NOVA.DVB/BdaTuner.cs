@@ -211,7 +211,7 @@ public sealed class BdaTuner : ITunerDevice
         bool high = r.Lnb.IsHighBand(r.FreqMHz);
 
         if (r.Std != "DVB-S")
-            _vendor?.SetDvbS2(TbsExtension.RollOffCode(r.RollOff), r.Pilot == "On", fec, modulation);
+            _vendor?.SetDvbS2(TbsExtension.RollOffCode(r.RollOff), r.Pilot != "Off", fec, modulation);
 
         var locator = Bda.Create<IDvbsLocator>(Clsid.DvbsLocator);
         Bda.Check(locator.put_CarrierFrequency(r.FreqMHz * 1000), "Frequency");
