@@ -17,8 +17,6 @@ internal static class Clsid
     public static readonly Guid DvbsLocator = new("1DF7D126-4050-47F0-A7CF-4C4CA9241333");
     public static readonly Guid InfTee = new("F8388A40-D5BB-11D0-BE5A-0080C706568E");
     public static readonly Guid Mpeg2Demux = new("AFB6C280-2C41-11D3-8A60-0000F81E0E4A");
-    public static readonly Guid SampleGrabber = new("C1F400A0-3F08-11D3-9F0B-006008039E37");
-    public static readonly Guid NullRenderer = new("C1F400A4-3F08-11D3-9F0B-006008039E37");
     public static readonly Guid BdaMpeg2Tif = new("FC772AB0-0C7F-11D3-8FF2-00A0C9224CF4");
 }
 
@@ -27,12 +25,6 @@ internal static class Category
     public static readonly Guid BdaNetworkTuner = new("71985F48-1CA1-11D3-9CC8-00C04F7971E0");
     public static readonly Guid BdaReceiver = new("FD0A5AF4-B41D-11D2-9C95-00C04F7971E0");
     public static readonly Guid BdaTransportInformation = new("A2E3074F-6C3D-11D3-B653-00C04F79498E");
-}
-
-internal static class MediaGuid
-{
-    public static readonly Guid Stream = new("E436EB83-524F-11CE-9F53-0020AF0BA770");
-    public static readonly Guid Mpeg2Transport = new("E06D8023-DB46-11CF-B4D1-00805F6CBBEA");
 }
 
 [StructLayout(LayoutKind.Sequential)]
@@ -78,38 +70,105 @@ internal interface IGraphBuilder
     [PreserveSig] int Connect(IPin output, IPin input);
 }
 
+[ComImport, Guid("0000010C-0000-0000-C000-000000000046"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+public interface IPersist
+{
+    [PreserveSig] int GetClassID(out Guid id);
+}
+
+[ComImport, Guid("56A86899-0AD4-11CE-B03A-0020AF0BA770"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+public interface IMediaFilter
+{
+    [PreserveSig] int GetClassID(out Guid id);
+    [PreserveSig] int Stop();
+    [PreserveSig] int Pause();
+    [PreserveSig] int Run(long start);
+    [PreserveSig] int GetState(int timeoutMs, out int state);
+    [PreserveSig] int SetSyncSource(IntPtr clock);
+    [PreserveSig] int GetSyncSource(out IntPtr clock);
+}
+
 [ComImport, Guid("56A86895-0AD4-11CE-B03A-0020AF0BA770"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-internal interface IBaseFilter
+public interface IBaseFilter
 {
     // IPersist
-    void _GetClassID();
+    [PreserveSig] int GetClassID(out Guid id);
     // IMediaFilter
-    void _Stop();
-    void _Pause();
-    void _Run();
-    void _GetState();
-    void _SetSyncSource();
-    void _GetSyncSource();
+    [PreserveSig] int Stop();
+    [PreserveSig] int Pause();
+    [PreserveSig] int Run(long start);
+    [PreserveSig] int GetState(int timeoutMs, out int state);
+    [PreserveSig] int SetSyncSource(IntPtr clock);
+    [PreserveSig] int GetSyncSource(out IntPtr clock);
     // IBaseFilter
     [PreserveSig] int EnumPins(out IEnumPins pins);
+    [PreserveSig] int FindPin([MarshalAs(UnmanagedType.LPWStr)] string id, out IPin? pin);
+    [PreserveSig] int QueryFilterInfo(IntPtr info);
+    [PreserveSig] int JoinFilterGraph(IntPtr graph, [MarshalAs(UnmanagedType.LPWStr)] string? name);
+    [PreserveSig] int QueryVendorInfo(out IntPtr info);
 }
 
 [ComImport, Guid("56A86892-0AD4-11CE-B03A-0020AF0BA770"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-internal interface IEnumPins
+public interface IEnumPins
 {
     [PreserveSig] int Next(int count, [Out, MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.Interface, SizeParamIndex = 0)] IPin?[] pins, IntPtr fetched);
+    [PreserveSig] int Skip(int count);
+    [PreserveSig] int Reset();
+    [PreserveSig] int Clone(out IEnumPins copy);
 }
 
 [ComImport, Guid("56A86891-0AD4-11CE-B03A-0020AF0BA770"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-internal interface IPin
+public interface IPin
 {
-    void _Connect();
-    void _ReceiveConnection();
-    void _Disconnect();
+    [PreserveSig] int Connect(IPin receiver, IntPtr type);
+    [PreserveSig] int ReceiveConnection(IPin connector, IntPtr type);
+    [PreserveSig] int Disconnect();
     [PreserveSig] int ConnectedTo(out IPin? pin);
-    void _ConnectionMediaType();
-    void _QueryPinInfo();
+    [PreserveSig] int ConnectionMediaType(IntPtr type);
+    [PreserveSig] int QueryPinInfo(IntPtr info);
     [PreserveSig] int QueryDirection(out int direction);   // 0 = input, 1 = output
+    [PreserveSig] int QueryId(out IntPtr id);
+    [PreserveSig] int QueryAccept(IntPtr type);
+    [PreserveSig] int EnumMediaTypes(out IEnumMediaTypes types);
+    [PreserveSig] int QueryInternalConnections(IntPtr pins, ref int count);
+    [PreserveSig] int EndOfStream();
+    [PreserveSig] int BeginFlush();
+    [PreserveSig] int EndFlush();
+    [PreserveSig] int NewSegment(long start, long stop, double rate);
+}
+
+[ComImport, Guid("89C31040-846B-11CE-97D3-00AA0055595A"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+public interface IEnumMediaTypes
+{
+    [PreserveSig] int Next(int count, IntPtr types, IntPtr fetched);
+    [PreserveSig] int Skip(int count);
+    [PreserveSig] int Reset();
+    [PreserveSig] int Clone(out IEnumMediaTypes copy);
+}
+
+[ComImport, Guid("56A8689D-0AD4-11CE-B03A-0020AF0BA770"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+public interface IMemInputPin
+{
+    [PreserveSig] int GetAllocator(out IntPtr allocator);
+    [PreserveSig] int NotifyAllocator(IntPtr allocator, [MarshalAs(UnmanagedType.Bool)] bool readOnly);
+    [PreserveSig] int GetAllocatorRequirements(IntPtr properties);
+    [PreserveSig] int Receive(IMediaSample sample);
+    [PreserveSig] int ReceiveMultiple(IntPtr samples, int count, out int processed);
+    [PreserveSig] int ReceiveCanBlock();
+}
+
+[ComImport, Guid("56A8689A-0AD4-11CE-B03A-0020AF0BA770"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+public interface IMediaSample
+{
+    [PreserveSig] int GetPointer(out IntPtr buffer);
+    [PreserveSig] int GetSize();
+    void _GetTime();
+    void _SetTime();
+    void _IsSyncPoint();
+    void _SetSyncPoint();
+    void _IsPreroll();
+    void _SetPreroll();
+    [PreserveSig] int GetActualDataLength();
 }
 
 [ComImport, Guid("56A868B1-0AD4-11CE-B03A-0020AF0BA770"), InterfaceType(ComInterfaceType.InterfaceIsDual)]
@@ -126,25 +185,6 @@ internal interface IKsPropertySet
     [PreserveSig] int Set(ref Guid propSet, int id, IntPtr instance, int instanceLength, IntPtr data, int dataLength);
     [PreserveSig] int Get(ref Guid propSet, int id, IntPtr instance, int instanceLength, IntPtr data, int dataLength, out int returned);
     [PreserveSig] int QuerySupported(ref Guid propSet, int id, out int support);   // 1 = get, 2 = set
-}
-
-[ComImport, Guid("6B652FFF-11FE-4FCE-92AD-0266B5D7C78F"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-internal interface ISampleGrabber
-{
-    [PreserveSig] int SetOneShot([MarshalAs(UnmanagedType.Bool)] bool oneShot);
-    [PreserveSig] int SetMediaType(ref AmMediaType type);
-    void _GetConnectedMediaType();
-    [PreserveSig] int SetBufferSamples([MarshalAs(UnmanagedType.Bool)] bool buffer);
-    void _GetCurrentBuffer();
-    void _GetCurrentSample();
-    [PreserveSig] int SetCallback(ISampleGrabberCB callback, int whichMethod);
-}
-
-[ComImport, Guid("0579154A-2B53-4994-B0D0-E773148EFF85"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-public interface ISampleGrabberCB
-{
-    [PreserveSig] int SampleCB(double time, IntPtr sample);
-    [PreserveSig] int BufferCB(double time, IntPtr buffer, int length);
 }
 
 [ComImport, Guid("28C52640-018A-11D3-9D8E-00C04F72D980"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]

@@ -7,11 +7,10 @@ namespace NOVA.DVB;
 /// <summary>
 /// One BDA satellite tuner as a DirectShow graph:
 /// network provider, tuner, optional capture filter, then a tee with two branches.
-/// Branch one is a sample grabber that hands the transport stream to the engine.
+/// Branch one is our own sink filter, which hands the transport stream to the engine.
 /// Branch two is the MPEG-2 demux and TIF that many BDA drivers need before they will run.
 /// </summary>
-[ComVisible(true)]
-public sealed class BdaTuner : ITunerDevice, ISampleGrabberCB
+public sealed class BdaTuner : ITunerDevice
 {
     private const int DvbSatellite = 2, FecViterbi = 1;
     private const int ModQpsk = 20, Mod8Psk = 27;
@@ -24,6 +23,7 @@ public sealed class BdaTuner : ITunerDevice, ISampleGrabberCB
     private readonly IBaseFilter _tunerFilter;
     private readonly IVendorExtension? _vendor;
     private readonly byte[] _copy = new byte[1 << 20];
+    private TsSinkFilter? _sink;                         // kept alive here while the graph uses it
     private IDvbsTuningSpace? _space;
     private LnbConfig? _spaceLnb;
     private IBdaSignalStatistics? _stats;
@@ -117,16 +117,9 @@ public sealed class BdaTuner : ITunerDevice, ISampleGrabberCB
         Bda.Check(_graph.AddFilter(tee, "Tee"), "Adding the tee");
         if (!Bda.Connect(_graph, source, tee)) throw new InvalidOperationException("The tuner output would not connect");
 
-        var grabberFilter = Track(Bda.Create<IBaseFilter>(Clsid.SampleGrabber));
-        var grabber = (ISampleGrabber)grabberFilter;
-        Bda.Check(_graph.AddFilter(grabberFilter, "TS Grabber"), "Adding the grabber");
-        ConnectGrabber(tee, grabberFilter, grabber);
-        var sink = Track(Bda.Create<IBaseFilter>(Clsid.NullRenderer));
-        Bda.Check(_graph.AddFilter(sink, "Sink"), "Adding the sink");
-        if (!Bda.Connect(_graph, grabberFilter, sink)) throw new InvalidOperationException("The stream sink would not connect");
-        grabber.SetBufferSamples(false);
-        grabber.SetOneShot(false);
-        Bda.Check(grabber.SetCallback(this, 1), "Setting the stream callback");
+        _sink = new TsSinkFilter(OnStream);
+        Bda.Check(_graph.AddFilter(_sink, "TS Sink"), "Adding the stream sink");
+        ConnectSink(tee, _sink);
 
         var demux = Track(Bda.Create<IBaseFilter>(Clsid.Mpeg2Demux));
         Bda.Check(_graph.AddFilter(demux, "Demux"), "Adding the demux");
@@ -134,29 +127,15 @@ public sealed class BdaTuner : ITunerDevice, ISampleGrabberCB
         if (!ConnectTif(demux)) Log.Warn("No transport information filter connected. Some drivers still run without it.");
     }
 
-    /// <summary>
-    /// BDA drivers name the transport stream in different ways (MPEG2_TRANSPORT, its STRIDE form, or
-    /// BDA_MPEG2_TRANSPORT), so the grabber accepts any stream subtype, then any type at all.
-    /// </summary>
-    private void ConnectGrabber(IBaseFilter tee, IBaseFilter grabberFilter, ISampleGrabber grabber)
+    private void ConnectSink(IBaseFilter tee, IBaseFilter sink)
     {
-        foreach (var major in new[] { MediaGuid.Stream, Guid.Empty })
-        {
-            var type = new AmMediaType { MajorType = major };
-            Bda.Check(grabber.SetMediaType(ref type), "Setting the stream type");
-            if (Bda.Connect(_graph, tee, grabberFilter))
-            {
-                Log.Info($"Stream grabber connected, accepted major type {major}");
-                return;
-            }
-        }
-
+        if (Bda.Connect(_graph, tee, sink)) return;
         int hr = 0;
         foreach (var output in Bda.Pins(tee, input: false).ToList())
-            foreach (var input in Bda.Pins(grabberFilter, input: true).ToList())
+            foreach (var input in Bda.Pins(sink, input: true).ToList())
                 if (output.ConnectedTo(out _) != 0) hr = _graph.ConnectDirect(output, input, IntPtr.Zero);
-        Log.Error($"Stream grabber refused the connection, hr=0x{hr:X8}");
-        throw new InvalidOperationException($"The stream grabber would not connect (0x{hr:X8})");
+        Log.Error($"The stream sink was refused, hr=0x{hr:X8}");
+        throw new InvalidOperationException($"The stream sink would not connect (0x{hr:X8})");
     }
 
     private bool ConnectTif(IBaseFilter demux)
@@ -311,16 +290,13 @@ public sealed class BdaTuner : ITunerDevice, ISampleGrabberCB
         "6/7" => 12, "8/9" => 13, "9/10" => 14, _ => -1,
     };
 
-    public int SampleCB(double time, IntPtr sample) => 0;
-
-    public int BufferCB(double time, IntPtr buffer, int length)
+    private void OnStream(IntPtr buffer, int length)
     {
-        if (_disposed || length <= 0) return 0;
+        if (_disposed || length <= 0) return;
         int n = Math.Min(length, _copy.Length);
         Marshal.Copy(buffer, _copy, 0, n);
         Interlocked.Add(ref _bytes, n);
         Data?.Invoke(_copy, n);
-        return 0;
     }
 
     public void Dispose()
