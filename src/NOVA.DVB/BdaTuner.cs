@@ -43,19 +43,27 @@ public sealed class BdaTuner : ITunerDevice, ISampleGrabberCB
         Name = device.Name;
         Log.Info($"Opening tuner {index}: {Name}");
 
-        _graph = Track(Bda.Create<IGraphBuilder>(Clsid.FilterGraph));
-        _control = (IMediaControl)_graph;
-        _tunerFilter = Track(Bda.Bind(device.Moniker));
-        Bda.Check(_graph.AddFilter(_tunerFilter, "Tuner"), "Adding the tuner");
+        try
+        {
+            _graph = Track(Bda.Create<IGraphBuilder>(Clsid.FilterGraph));
+            _control = (IMediaControl)_graph;
+            _tunerFilter = Track(Bda.Bind(device.Moniker));
+            Bda.Check(_graph.AddFilter(_tunerFilter, "Tuner"), "Adding the tuner");
 
-        _tuner = ConnectProvider();
-        var tail = ConnectReceiver();
-        BuildOutput(tail);
+            _tuner = ConnectProvider();
+            var tail = ConnectReceiver();
+            BuildOutput(tail);
 
-        _vendor = TbsExtension.TryCreate(_tunerFilter, Name);
-        _vendor?.Fill(Capabilities);
-        _stats = FindSignalStatistics();
-        Log.Info($"Graph ready. Extension={Capabilities.Extension}, signal statistics={(_stats != null)}");
+            _vendor = TbsExtension.TryCreate(_tunerFilter, Name);
+            _vendor?.Fill(Capabilities);
+            _stats = FindSignalStatistics();
+            Log.Info($"Graph ready. Extension={Capabilities.Extension}, signal statistics={(_stats != null)}");
+        }
+        catch
+        {
+            ReleaseAll();                                // a failed open must not keep the tuner busy
+            throw;
+        }
     }
 
     private T Track<T>(T com) where T : class
@@ -111,10 +119,8 @@ public sealed class BdaTuner : ITunerDevice, ISampleGrabberCB
 
         var grabberFilter = Track(Bda.Create<IBaseFilter>(Clsid.SampleGrabber));
         var grabber = (ISampleGrabber)grabberFilter;
-        var type = new AmMediaType { MajorType = MediaGuid.Stream, SubType = MediaGuid.Mpeg2Transport };
-        Bda.Check(grabber.SetMediaType(ref type), "Setting the stream type");
         Bda.Check(_graph.AddFilter(grabberFilter, "TS Grabber"), "Adding the grabber");
-        if (!Bda.Connect(_graph, tee, grabberFilter)) throw new InvalidOperationException("The stream grabber would not connect");
+        ConnectGrabber(tee, grabberFilter, grabber);
         var sink = Track(Bda.Create<IBaseFilter>(Clsid.NullRenderer));
         Bda.Check(_graph.AddFilter(sink, "Sink"), "Adding the sink");
         if (!Bda.Connect(_graph, grabberFilter, sink)) throw new InvalidOperationException("The stream sink would not connect");
@@ -126,6 +132,31 @@ public sealed class BdaTuner : ITunerDevice, ISampleGrabberCB
         Bda.Check(_graph.AddFilter(demux, "Demux"), "Adding the demux");
         if (!Bda.Connect(_graph, tee, demux)) { Log.Warn("Demux branch would not connect"); return; }
         if (!ConnectTif(demux)) Log.Warn("No transport information filter connected. Some drivers still run without it.");
+    }
+
+    /// <summary>
+    /// BDA drivers name the transport stream in different ways (MPEG2_TRANSPORT, its STRIDE form, or
+    /// BDA_MPEG2_TRANSPORT), so the grabber accepts any stream subtype, then any type at all.
+    /// </summary>
+    private void ConnectGrabber(IBaseFilter tee, IBaseFilter grabberFilter, ISampleGrabber grabber)
+    {
+        foreach (var major in new[] { MediaGuid.Stream, Guid.Empty })
+        {
+            var type = new AmMediaType { MajorType = major };
+            Bda.Check(grabber.SetMediaType(ref type), "Setting the stream type");
+            if (Bda.Connect(_graph, tee, grabberFilter))
+            {
+                Log.Info($"Stream grabber connected, accepted major type {major}");
+                return;
+            }
+        }
+
+        int hr = 0;
+        foreach (var output in Bda.Pins(tee, input: false).ToList())
+            foreach (var input in Bda.Pins(grabberFilter, input: true).ToList())
+                if (output.ConnectedTo(out _) != 0) hr = _graph.ConnectDirect(output, input, IntPtr.Zero);
+        Log.Error($"Stream grabber refused the connection, hr=0x{hr:X8}");
+        throw new InvalidOperationException($"The stream grabber would not connect (0x{hr:X8})");
     }
 
     private bool ConnectTif(IBaseFilter demux)
@@ -303,8 +334,13 @@ public sealed class BdaTuner : ITunerDevice, ISampleGrabberCB
         }
         catch (COMException ex) { Log.Warn($"Stopping the tuner: {ex.Message}"); }
         _vendor?.Dispose();
+        ReleaseAll();
+        Log.Info("Tuner released");
+    }
+
+    private void ReleaseAll()
+    {
         for (int i = _com.Count - 1; i >= 0; i--) Bda.Release(_com[i]);
         _com.Clear();
-        Log.Info("Tuner released");
     }
 }
