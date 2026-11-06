@@ -16,6 +16,7 @@ public sealed class TvPlayer : IDisposable
     private bool _mute;
     private string _aspect = "Fill";
     private int _windowWidth, _windowHeight;
+    private bool _teletext;
 
     public event Action<string>? StateChanged;
     public event Action<int, int>? VideoSizeKnown;
@@ -73,6 +74,7 @@ public sealed class TvPlayer : IDisposable
 
     public void Stop()
     {
+        _teletext = false;
         _ring?.Finish();
         _player.Stop();
         _media?.Dispose();
@@ -110,6 +112,68 @@ public sealed class TvPlayer : IDisposable
         bool fill = _aspect == "Fill" && _windowWidth > 0 && _windowHeight > 0;
         _player.AspectRatio = _aspect == "Fill" ? null : _aspect;
         _player.CropGeometry = fill ? $"{_windowWidth}:{_windowHeight}" : null;
+    }
+
+    /// <summary>Switches to the next audio track and returns its name, or null when the stream has none.</summary>
+    public string? CycleAudio()
+    {
+        var list = _player.AudioTrackDescription.Where(t => t.Id >= 0).ToArray();
+        if (list.Length == 0) return null;
+        int i = Array.FindIndex(list, t => t.Id == _player.AudioTrack);
+        var next = list[(i + 1) % list.Length];
+        _player.SetAudioTrack(next.Id);
+        return next.Name;
+    }
+
+    /// <summary>Steps through the subtitle tracks and then off. Returns the new track name, or "Off".</summary>
+    public string CycleSubtitle()
+    {
+        var list = _player.SpuDescription.Where(t => t.Id >= 0 && !IsTeletext(t.Name)).ToArray();
+        int i = Array.FindIndex(list, t => t.Id == _player.Spu);
+        if (i + 1 >= list.Length)
+        {
+            _player.SetSpu(-1);
+            return "Off";
+        }
+        var next = list[i + 1];
+        _player.SetSpu(next.Id);
+        return next.Name ?? "";
+    }
+
+    /// <summary>Shows teletext page 100 when the stream carries teletext, or hides it again. Returns the new state.</summary>
+    public bool ToggleTeletext()
+    {
+        if (_teletext)
+        {
+            SetTeletextPage(0);
+            _player.SetSpu(-1);
+            _teletext = false;
+            return false;
+        }
+        var track = _player.SpuDescription.FirstOrDefault(t => t.Id >= 0 && IsTeletext(t.Name));
+        if (track.Name is null) return false;
+        _player.SetSpu(track.Id);
+        SetTeletextPage(100);
+        _teletext = true;
+        return true;
+    }
+
+    private static bool IsTeletext(string? name) => name?.Contains("teletext", StringComparison.OrdinalIgnoreCase) == true;
+
+    /// <summary>LibVLCSharp versions differ on how the page is set, so the call is found at run time.</summary>
+    private void SetTeletextPage(int page)
+    {
+        try
+        {
+            var method = typeof(MediaPlayer).GetMethod("SetTeletext", [typeof(int)]);
+            if (method != null) { method.Invoke(_player, [page]); return; }
+            var prop = typeof(MediaPlayer).GetProperty("Teletext");
+            if (prop?.CanWrite == true) prop.SetValue(_player, page);
+        }
+        catch (System.Reflection.TargetInvocationException ex)
+        {
+            Log.Warn($"Teletext page: {ex.InnerException?.Message}");
+        }
     }
 
     public IEnumerable<(int Id, string Name)> AudioTracks() => _player.AudioTrackDescription.Select(t => (t.Id, t.Name));

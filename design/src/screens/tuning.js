@@ -180,7 +180,7 @@ SCREENS.scan = () => {
         <label class="check"><input id="scan-tv" type="checkbox" data-chg="scan-opt" data-k="tv" ${scan.tv ? 'checked' : ''}>${t('TV channels')}</label>
         <label class="check"><input id="scan-radio" type="checkbox" data-chg="scan-opt" data-k="radio" ${scan.radio ? 'checked' : ''}>${t('Radio channels')}</label>
         <label class="check"><input id="scan-fta" type="checkbox" data-chg="scan-opt" data-k="fta" ${scan.fta ? 'checked' : ''}>${t('Free-to-air only')}</label>
-        ${NATIVE ? '' : `<label class="check"><input id="scan-net" type="checkbox" data-chg="scan-opt" data-k="net" ${scan.net ? 'checked' : ''}>${t('Read network table (NIT) for new transponders')}</label>`}
+        ${scan.mode === 'manual' ? '' : `<label class="check"><input id="scan-net" type="checkbox" data-chg="scan-opt" data-k="net" ${scan.net ? 'checked' : ''}>${t('Read network table (NIT) for new transponders')}</label>`}
         </fieldset>${devNote}</section>
       <section class="card pane"><div class="card-head">${ic('signal')}<h2>${t('Progress')}</h2><span class="sp"></span><span class="sub ltr">${scan.tps.length ? Math.min(scan.i, scan.tps.length) + ' / ' + scan.tps.length : ''}</span></div>
         <div class="scan-ring"><svg viewBox="0 0 150 150"><circle cx="75" cy="75" r="${r}" fill="none" stroke="var(--surface-3)" stroke-width="9"/><circle cx="75" cy="75" r="${r}" fill="none" stroke="var(--accent-2)" stroke-width="9" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${c * (1 - scan.pct / 100)}"/></svg><b>${Math.round(scan.pct)}%</b></div>

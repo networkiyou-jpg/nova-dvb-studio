@@ -73,7 +73,7 @@ function seedChannels() {
       sid: 1000 + i * 7, vpid: radio ? 0 : 501 + i, apid: 601 + i,
       audio: i % 2 === 0 ? ['Arabic', 'English'] : ['Arabic'],
       subs: i % 5 === 0 ? ['Arabic', 'French'] : [],
-      fta: i % 3 !== 0, fav: i < 2 ? ['g1'] : [], locked: false, hidden: false,
+      fta: i % 3 !== 0, fav: i < 2 ? ['g1'] : [], locked: false, hidden: false, txt: !radio && i % 4 === 0,
     };
   });
 }
@@ -110,6 +110,8 @@ function seedState() {
       subLang: 'Off', subSize: 100, recFolder: 'C:\\NOVA Recordings', recFormat: 'TS', recPad: 2, recPost: 5, recEpgName: true,
       epgSource: 'Broadcast (EIT)', epgDays: 7, epgUpdate: 'While tuned', epgUrl: '',
       piconFolder: 'C:\\ProgramData\\NOVA\\Picons', piconFormat: 'PNG and SVG',
+      piconSource: 'picons', piconBase: 'https://raw.githubusercontent.com/picons/picons/master/build-source/', piconCustom: '', piconStyle: 'default', piconAuto: true,
+      osdZap: true, osdSec: '5', osdSize: 'normal', osdMouse: true, epgLang: 'ara,eng,fre,fra',
       dbPath: 'C:\\ProgramData\\NOVA\\nova.db', logDays: 14, logLevel: 'Information', camEncrypt: true, camAuto: false, bissEncrypt: true, updateCheck: true,
     },
   };

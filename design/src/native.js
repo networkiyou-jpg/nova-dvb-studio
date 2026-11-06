@@ -29,8 +29,9 @@ if (NATIVE) (() => {
     if (!Engine.opened) { toast(t('No satellite tuner found'), 'warn'); return; }
     const sat = satById(ch.sat), tp = tpOf(ch);
     if (!sat || !tp) { toast(t('This channel has no transponder. Scan it again.'), 'bad'); return; }
-    S.player.ch = id; S.player.audio = 0; S.player.sub = -1; S.player.playing = true; save();
     const req = tuneRequest(sat, tp);
+    if (Engine.recording && !sameTp(req, Engine.lastTune)) { toast(t('A recording is running on another transponder. Stop it first, or pick a channel on the same transponder.'), 'warn'); return; }
+    S.player.ch = id; S.player.audio = 0; S.player.sub = -1; S.player.playing = true; save();
     if (!sameTp(req, Engine.lastTune)) { engine('tune', req); Engine.lastTune = req; Engine.lockWait = Date.now() + 8000; }
     sendAudio();
     post({ cmd: 'aspect', value: S.player.aspect });
@@ -97,7 +98,7 @@ if (NATIVE) (() => {
   function scanNext() {
     if (scan.status !== 'running') return;
     if (scan.i >= scan.tps.length) { scan.status = 'done'; scan.pct = 100; if (S.view === 'scan') refresh(); toast(`${t('Scan finished')}: ${scan.found.length}`, 'good'); return; }
-    engine('scan', { id: scan.i, timeoutMs: 12000, tune: tuneRequest(satById(scan.sat), scan.tps[scan.i]) });
+    engine('scan', { id: scan.i, timeoutMs: 12000, nit: !!scan.net, tune: tuneRequest(satById(scan.sat), scan.tps[scan.i]) });
   }
   function onScanResult(m) {
     const p = scan.tps[scan.i];
@@ -108,10 +109,23 @@ if (NATIVE) (() => {
       const radio = sv.serviceType === 2 || sv.serviceType === 0x0A || (!video && audio.length > 0);
       if (!video && !audio.length) return;
       if ((radio && !scan.radio) || (!radio && !scan.tv) || (scan.fta && !sv.freeToAir)) return;
-      scan.found.push({ name: sv.name || `Service ${sv.sid}`, provider: sv.provider, type: radio ? 'radio' : 'tv', fta: sv.freeToAir, tp: p, sid: sv.sid, tsid: sv.tsid, svcType: sv.serviceType, video, audio, subs: sv.streams.filter(x => x.kind === 'subtitle') });
+      scan.found.push({ name: sv.name || `Service ${sv.sid}`, provider: sv.provider, type: radio ? 'radio' : 'tv', fta: sv.freeToAir, tp: p, sid: sv.sid, tsid: sv.tsid, onid: sv.onid || m.onid || 0, svcType: sv.serviceType, video, audio, subs: sv.streams.filter(x => x.kind === 'subtitle'), txt: sv.streams.some(x => x.kind === 'teletext') });
       added++;
     });
     scan.log.unshift(`${p.freq} ${p.pol} ${p.sr}  ${m.locked ? '<b>lock</b>' : 'no lock'}  +${added}`);
+    /* Network search: the NIT lists the other transponders of the network on this satellite. */
+    if (scan.net && scan.mode !== 'manual' && Array.isArray(m.transponders)) {
+      const lon = lonOf(satById(scan.sat));
+      let more = 0;
+      m.transponders.forEach(x => {
+        if (x.orbital && Math.abs(x.orbital / 10 - lon) > 0.6) return;
+        if (x.freqMHz < 10700 || x.freqMHz > 12750 || !x.symbolRate) return;
+        if (scan.tps.some(q => Math.abs(q.freq - x.freqMHz) <= 3 && q.pol === x.pol)) return;
+        scan.tps.push({ freq: x.freqMHz, pol: x.pol, sr: x.symbolRate, fec: x.fec, mod: x.mod, std: x.std, ro: x.rollOff, pilot: 'Auto' });
+        more++;
+      });
+      if (more) scan.log.unshift(`NIT: +${more} ${t('transponders')}`);
+    }
     scan.i++; scan.pct = scan.i / scan.tps.length * 100;
     if (S.view === 'scan') refresh();
     scanNext();
@@ -122,17 +136,21 @@ if (NATIVE) (() => {
   A['scan-save'] = () => {
     const sat = satById(scan.sat);
     let added = 0;
+    const newIds = [];
     scan.found.forEach(f => {
-      if (S.channels.some(c => c.sat === sat.id && c.f === f.tp.freq && c.p === f.tp.pol && c.sid === f.sid)) return;
+      const old = S.channels.find(c => c.sat === sat.id && c.f === f.tp.freq && c.p === f.tp.pol && c.sid === f.sid);
+      if (old) { Object.assign(old, { tsid: f.tsid, onid: f.onid, svcType: f.svcType, txt: f.txt }); return; }
       if (!sat.tps.some(p => p.freq === f.tp.freq && p.pol === f.tp.pol)) sat.tps.push({ id: uid('tp'), ...f.tp });
       const radio = f.type === 'radio', hd = SVC_HD.includes(f.svcType) || HD_NAME.test(f.name) || f.video?.codec === 'H.265';
       const words = f.name.replace(/[^\p{L}\p{N} ]/gu, '').trim().split(/\s+/);
       S.channels.push({ id: uid('ch'), lcn: S.channels.length + 1, name: f.name, provider: f.provider || '', code: words.slice(0, 2).map(w => w[0] || '').join('').toUpperCase() || 'TV', num: '', kind: radio ? 'radio' : 'news', q: radio ? 'R' : f.svcType === 0x1F || /\b(4K|UHD)\b/i.test(f.name) ? '4K' : hd ? 'HD' : 'SD', p1: '#3a4678', p2: '#1d2547', type: f.type, sat: sat.id, f: f.tp.freq, p: f.tp.pol, tp: 0,
         vcodec: f.video?.codec || '', acodec: f.audio[0]?.codec || '', res: '', kbps: 0, sid: f.sid, tsid: f.tsid, vpid: f.video?.pid || 0, apid: f.audio[0]?.pid || 0,
-        audio: f.audio.map(a => a.lang || a.codec), subs: f.subs.map(a => a.lang), fta: f.fta, fav: [], locked: false, hidden: false });
+        audio: f.audio.map(a => a.lang || a.codec), subs: f.subs.map(a => a.lang), fta: f.fta, fav: [], locked: false, hidden: false, onid: f.onid, svcType: f.svcType, txt: f.txt });
+      newIds.push(S.channels[S.channels.length - 1].id);
       added++;
     });
     scan.found = []; save(); refresh(); toast(`${added} ${t('channels saved to your list')}`, 'good');
+    piconAfterScan(newIds);
   };
 
   /* ---------- DiSEqC motor, DiSEqC 1.2 ---------- */
@@ -155,26 +173,71 @@ if (NATIVE) (() => {
   };
 
   /* ---------- Recording ---------- */
-  A['toggle-rec'] = () => {
-    if (S.mode !== 'live') { toast(t('Recording needs a tuner with a locked signal.'), 'warn'); return; }
-    if (!Engine.recording) { post({ cmd: 'recPath', folder: S.settings.recFolder, title: curCh().name }); return; }
-    engine('recStop');
-    const c = curCh(), mins = Math.max(1, Math.round((Date.now() - Engine.recStart) / 6e4));
-    S.recordings.unshift({ id: uid('r'), title: c.name, ch: c.id, at: Engine.recStart, mins, gb: +((Engine.signal?.bitrateKbps || 0) * mins * 60 / 8e6).toFixed(2), path: Engine.recPath });
-    Engine.recording = false; recording = null; save(); toast(t('Recording saved to Recordings'), 'good');
-    if (S.view === 'live') { renderPlayer(); renderCards(); }
+  const recTitle = () => {
+    const c = curCh(), n = S.settings.recEpgName ? nowNext(c)[0] : null;
+    return n ? `${c.name} - ${n.title}` : c.name;
   };
+  function startRec(title) { Engine.recTitle = title; post({ cmd: 'recPath', folder: S.settings.recFolder, title }); }
+  function stopRec() {
+    if (!Engine.recording) return;
+    engine('recStop');
+    const c = chById(Engine.recCh) || curCh(), mins = Math.max(1, Math.round((Date.now() - Engine.recStart) / 6e4));
+    S.recordings.unshift({ id: uid('r'), title: Engine.recTitle || c.name, ch: c.id, at: Engine.recStart, mins, gb: +((Engine.signal?.bitrateKbps || 0) * mins * 60 / 8e6).toFixed(2), path: Engine.recPath });
+    Engine.recording = false; recording = null; save(); toast(t('Recording saved to Recordings'), 'good');
+    if (S.view === 'live') { renderPlayer(); renderCards(); } else if (S.view === 'recordings') refresh();
+  }
+  A['toggle-rec'] = () => {
+    if (Engine.recording) { if (Sched.active) Sched.active.stopAt = 0; stopRec(); return; }
+    if (S.mode !== 'live') { toast(t('Recording needs a tuner with a locked signal.'), 'warn'); return; }
+    startRec(recTitle());
+  };
+
+  /* ---------- Scheduled recordings ----------
+     Checked every few seconds while NOVA is open. A due schedule tunes its channel, records from the
+     early margin to the late margin, then repeats daily or weekly, or is removed. */
+  const Sched = { active: null };
+  function finishTimer(k) {
+    if (k.repeat === 'Daily' || k.repeat === 'Weekly') {
+      const step = k.repeat === 'Daily' ? 864e5 : 7 * 864e5;
+      while (k.start + k.mins * 6e4 <= Date.now()) k.start += step;
+      delete k.pid;
+    } else S.timers = S.timers.filter(x => x !== k);
+    save();
+    if (S.view === 'recordings') refresh();
+  }
+  function schedTick() {
+    const now = Date.now(), early = (Number(S.settings.recPad) || 0) * 6e4, late = (Number(S.settings.recPost) || 0) * 6e4;
+    const a = Sched.active;
+    if (a) {
+      if (now >= a.stopAt) { if (Engine.recording) stopRec(); Sched.active = null; finishTimer(a.timer); }
+      return;
+    }
+    const due = S.timers.find(k => now >= k.start - early && now < k.start + k.mins * 6e4);
+    if (!due) return;
+    const ch = chById(due.ch);
+    if (!ch) { finishTimer(due); return; }
+    if (!Engine.opened) return;
+    if (Engine.recording && Engine.recCh !== ch.id) { toast(`${t('Scheduled recording skipped, the tuner is busy')}: ${due.title}`, 'warn'); finishTimer(due); return; }
+    Sched.active = { timer: due, stopAt: due.start + due.mins * 6e4 + late };
+    if (Engine.recording) return;                         /* already recording this channel by hand */
+    unlocked.add(ch.id);                                  /* a schedule set by the owner is not stopped by the PIN */
+    if (S.player.ch !== ch.id || !Engine.lastTune) tune(ch.id);
+    toast(`${t('Scheduled recording')}: ${due.title}`, 'good');
+    setTimeout(() => { if (Sched.active?.timer === due && !Engine.recording) startRec(`${ch.name} - ${due.title}`); }, 4000);
+  }
+  setInterval(schedTick, 5000);
+  Engine.schedTick = schedTick;      /* lets the tests run a check without waiting */
   A['rec-play'] = el => { const r = S.recordings.find(x => x.id === el.dataset.v); if (r?.path) { go('live'); post({ cmd: 'playFile', path: r.path }); S.player.playing = true; } };
 
   /* ---------- Window and files ---------- */
   A['win-min'] = () => post({ cmd: 'windowMin' });
   A['win-max'] = () => post({ cmd: 'windowMax' });
-  const reallyClose = () => { save(); post({ cmd: 'saveState', state: JSON.parse(JSON.stringify(S, secretFilter)) }); post({ cmd: 'windowClose' }); };
+  const reallyClose = () => { save(); epgPersist(true); post({ cmd: 'saveState', state: JSON.parse(JSON.stringify(S, secretFilter)) }); post({ cmd: 'windowClose' }); };
   A['win-close'] = () => {
-    if (S.settings.confirmExit) confirmBox({ title: t('Close NOVA DVB Studio?'), msg: Engine.recording ? t('A recording is running. Closing stops it.') : t('Playback stops and the tuner is released.'), yes: t('Close'), onYes: reallyClose });
+    if (S.settings.confirmExit) confirmBox({ title: t('Close NOVA DVB Studio?'), msg: Engine.recording ? t('A recording is running. Closing stops it.') : S.timers.length ? t('Scheduled recordings run only while NOVA is open.') : t('Playback stops and the tuner is released.'), yes: t('Close'), onYes: reallyClose });
     else reallyClose();
   };
-  A.about = () => openModal({ title: 'NOVA DVB Studio', width: 480, body: `<dl class="kv dl-plain"><dt>${t('Version')}</dt><dd class="ltr">0.1.0</dd><dt>${t('Tuner')}</dt><dd>${esc(Engine.name || t('No tuner'))}</dd><dt>${t('Extension')}</dt><dd>${esc(Engine.caps?.extension || '—')}</dd><dt>${t('Icons')}</dt><dd>Lucide (ISC)</dd><dt>${t('Video')}</dt><dd>LibVLC (LGPL)</dd></dl>`, foot: `<button class="btn" data-act="logs">${t('Open log folder')}</button><button class="btn primary" data-act="modal-close">${t('Close')}</button>` });
+  A.about = () => openModal({ title: 'NOVA DVB Studio', width: 480, body: `<dl class="kv dl-plain"><dt>${t('Version')}</dt><dd class="ltr">0.2.0</dd><dt>${t('Tuner')}</dt><dd>${esc(Engine.name || t('No tuner'))}</dd><dt>${t('Extension')}</dt><dd>${esc(Engine.caps?.extension || '—')}</dd><dt>${t('Icons')}</dt><dd>Lucide (ISC)</dd><dt>${t('Video')}</dt><dd>LibVLC (LGPL)</dd><dt>${t('Logos')}</dt><dd>picons project (github.com/picons/picons)</dd></dl>`, foot: `<button class="btn" data-act="logs">${t('Open log folder')}</button><button class="btn primary" data-act="modal-close">${t('Close')}</button>` });
   A.logs = () => post({ cmd: 'openLogs' });
   saveFile = async (filename, text) => post({ cmd: 'saveFile', name: filename, text });
   A['pick-folder'] = el => post({ cmd: 'pickFolder', key: el.dataset.v });
@@ -236,12 +299,25 @@ if (NATIVE) (() => {
     if (m.ram != null) { set('st-ram', `${m.ram}%`); w('st-ram-b', m.ram); }
     set('st-disk', `${m.drive} ${m.freeGb} GB`);
   }
+  const epgConfig = () => engine('epgConfig', { on: (S.settings.epgSource || 'Broadcast (EIT)') === 'Broadcast (EIT)' && S.settings.epgUpdate !== 'Manually', lang: S.settings.epgLang || 'ara,eng,fre,fra' });
+  settingsChanged = () => { if (Engine.opened) epgConfig(); };
+  let txtOn = false;
   window.chrome.webview.addEventListener('message', e => {
     const m = e.data;
+    if (m.id && HostReq.has(m.id) && (m.evt === 'fetched' || m.evt === 'piconFetched' || m.evt === 'piconSaved')) { HostReq.get(m.id)(m); HostReq.delete(m.id); return; }
     switch (m.evt) {
+      case 'epg': if (Array.isArray(m.events)) epgFromEngine(m.events); break;
+      case 'epgData': epgUnpack(m.data); epgRefreshViews(); break;
+      case 'videoMouse': if (S.settings.osdMouse !== false && !ibOn()) ibShow(3); break;
+      case 'trackChanged': {
+        if (m.act === 'audio') toast(m.name ? `${t('Audio track')}: ${m.name}` : t('This channel has one audio track.'));
+        else if (m.act === 'sub') toast(`${t('Subtitles')}: ${m.name === 'Off' ? t('Off') : m.name}`);
+        else { toast(t(m.name === 'on' ? 'Teletext on' : txtOn ? 'Teletext off' : 'This channel carries no teletext.')); txtOn = m.name === 'on'; }
+        break;
+      }
       case 'ready': engine('list'); break;
       case 'devices': onDevices(m); break;
-      case 'opened': Engine.opening = false; Engine.opened = true; Engine.name = m.name; Engine.caps = m.capabilities; Engine.index = Number(S.settings.device) || 0; Engine.lastTune = null; setMode('ready'); renderStatus(); if (S.view === 'preferences') refresh(); toast(`${t('Tuner ready')}: ${m.name}`, 'good'); if (S.settings.startup === 'last' && S.channels.length && chById(S.player.ch)) tune(S.player.ch); break;
+      case 'opened': epgConfig(); Engine.opening = false; Engine.opened = true; Engine.name = m.name; Engine.caps = m.capabilities; Engine.index = Number(S.settings.device) || 0; Engine.lastTune = null; setMode('ready'); renderStatus(); if (S.view === 'preferences') refresh(); toast(`${t('Tuner ready')}: ${m.name}`, 'good'); if (S.settings.startup === 'last' && S.channels.length && chById(S.player.ch)) tune(S.player.ch); break;
       case 'closed': Engine.opened = false; setMode('nodevice'); break;
       case 'signal': onSignal(m); break;
       case 'scanResult': onScanResult(m); break;
@@ -259,7 +335,7 @@ if (NATIVE) (() => {
         break;
       }
       case 'tracks': showTracks(m); break;
-      case 'recPath': Engine.recPath = m.path; engine('recStart', { path: m.path }); Engine.recording = true; Engine.recStart = Date.now(); recording = { ch: S.player.ch, at: Date.now() }; if (S.view === 'live') { renderPlayer(); renderCards(); } toast(`${t('Recording')}: ${curCh().name}`, 'good'); break;
+      case 'recPath': Engine.recPath = m.path; Engine.recCh = S.player.ch; engine('recStart', { path: m.path }); Engine.recording = true; Engine.recStart = Date.now(); recording = { ch: S.player.ch, at: Date.now() }; if (S.view === 'live') { renderPlayer(); renderCards(); } toast(`${t('Recording')}: ${curCh().name}`, 'good'); break;
       case 'diseqcResult': toast(t(m.ok ? 'DiSEqC command sent' : 'The driver refused the DiSEqC command'), m.ok ? 'good' : 'bad'); break;
       case 'fileSaved': toast(`${t('Saved')} ${m.path}`, 'good'); break;
       case 'folderPicked': S.settings[m.key] = m.path; save(); refresh(); break;
@@ -284,5 +360,10 @@ if (NATIVE) (() => {
 
   /* First contact */
   S.mode = 'nodevice';
-  setTimeout(() => { post({ cmd: 'uiReady' }); if (!S.satListAt) post({ cmd: 'fetchText', url: SAT_LIST_URL }); }, 0);
+  setTimeout(() => {
+    post({ cmd: 'uiReady' });
+    post({ cmd: 'epgLoad' });
+    if (!S.satListAt) post({ cmd: 'fetchText', url: SAT_LIST_URL });
+    if (S.settings.epgSource === 'XMLTV address' && S.settings.epgUrl && S.settings.epgUpdate !== 'Manually') setTimeout(() => loadXmltv(false), 4000);
+  }, 0);
 })();

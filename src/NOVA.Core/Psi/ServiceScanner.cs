@@ -1,25 +1,33 @@
 namespace NOVA.Core.Psi;
 
-/// <summary>Reads PAT, PMT and SDT from packets of one transponder and builds the list of services.</summary>
+/// <summary>
+/// Reads PAT, PMT and SDT from packets of one transponder and builds the list of services.
+/// The NIT, when present, adds the other transponders of the same network.
+/// </summary>
 public sealed class ServiceScanner
 {
-    private const int PidPat = 0, PidSdt = 0x11;
+    private const int PidPat = 0, PidNit = 0x10, PidSdt = 0x11;
     private readonly Dictionary<int, SectionAssembler> _assemblers = [];
     private readonly Dictionary<int, ServiceInfo> _services = [];
     private readonly HashSet<int> _pmtDone = [];
     private readonly Dictionary<int, HashSet<int>> _sdtSeen = [];
-    private bool _patDone, _sdtDone;
-    private int _tsid = -1;
+    private readonly HashSet<int> _nitSeen = [];
+    private readonly Dictionary<(int, string), TransponderInfo> _transponders = [];
+    private bool _patDone, _sdtDone, _nitDone;
+    private int _tsid = -1, _onid = -1;
 
     public bool IsComplete => _patDone && _sdtDone && _pmtDone.Count >= _services.Count(s => s.Value.PmtPid > 0);
     public bool HasPat => _patDone;
+    public bool HasNit => _nitDone;
+    public int Onid => _onid;
     public IReadOnlyCollection<ServiceInfo> Services => _services.Values;
+    public IReadOnlyCollection<TransponderInfo> Transponders => _transponders.Values;
 
     public void FeedPacket(byte[] p, int off)
     {
         if ((p[off + 1] & 0x80) != 0) return;            // transport error
         int pid = ((p[off + 1] & 0x1F) << 8) | p[off + 2];
-        if (pid == PidPat || pid == PidSdt || _assemblers.ContainsKey(pid))
+        if (pid == PidPat || pid == PidSdt || pid == PidNit || _assemblers.ContainsKey(pid))
             Assembler(pid).Feed(p, off);
     }
 
@@ -37,13 +45,14 @@ public sealed class ServiceScanner
             case 0x00 when pid == PidPat: ParsePat(s); break;
             case 0x02: ParsePmt(s); break;
             case 0x42 when pid == PidSdt: ParseSdt(s); break;
+            case 0x40 when pid == PidNit: ParseNit(s); break;
         }
     }
 
     private ServiceInfo Service(int sid)
     {
         if (!_services.TryGetValue(sid, out var svc))
-            _services[sid] = svc = new ServiceInfo { Sid = sid, Tsid = _tsid };
+            _services[sid] = svc = new ServiceInfo { Sid = sid, Tsid = _tsid, Onid = Math.Max(0, _onid) };
         return svc;
     }
 
@@ -128,6 +137,8 @@ public sealed class ServiceScanner
     private void ParseSdt(byte[] s)
     {
         int tsid = (s[3] << 8) | s[4];
+        _onid = (s[8] << 8) | s[9];
+        foreach (var known in _services.Values) known.Onid = _onid;
         int i = 11, end = s.Length - 4;
         while (i + 5 <= end)
         {
@@ -135,6 +146,7 @@ public sealed class ServiceScanner
             bool scrambled = (s[i + 3] & 0x10) != 0;
             int loop = ((s[i + 3] & 0x0F) << 8) | s[i + 4];
             var svc = Service(sid);
+            svc.Onid = _onid;
             if (scrambled) svc.FreeToAir = false;
             for (int d = i + 5, dEnd = Math.Min(i + 5 + loop, end); d + 2 <= dEnd; d += 2 + s[d + 1])
             {
@@ -150,5 +162,35 @@ public sealed class ServiceScanner
         if (!_sdtSeen.TryGetValue(tsid, out var seen)) _sdtSeen[tsid] = seen = [];
         seen.Add(s[6]);
         if (seen.Count > s[7]) _sdtDone = true;
+    }
+
+    /// <summary>NIT actual: satellite delivery descriptors of every transponder in the network.</summary>
+    private void ParseNit(byte[] s)
+    {
+        int end = s.Length - 4;
+        if (end < 12) return;
+        int netDesc = ((s[8] & 0x0F) << 8) | s[9];
+        int i = 10 + netDesc;
+        if (i + 2 > end) return;
+        int loopEnd = Math.Min(end, i + 2 + (((s[i] & 0x0F) << 8) | s[i + 1]));
+        i += 2;
+        while (i + 6 <= loopEnd)
+        {
+            int tsid = (s[i] << 8) | s[i + 1], onid = (s[i + 2] << 8) | s[i + 3];
+            int len = ((s[i + 4] & 0x0F) << 8) | s[i + 5];
+            int dEnd = Math.Min(i + 6 + len, loopEnd);
+            for (int d = i + 6; d + 2 <= dEnd; d += 2 + s[d + 1])
+            {
+                if (s[d] != 0x43 || d + 2 + s[d + 1] > dEnd) continue;
+                var tp = Si.SatelliteDelivery(s.AsSpan(d + 2, s[d + 1]));
+                if (tp is null || tp.FreqMHz <= 0 || tp.SymbolRate <= 0) continue;
+                tp.Tsid = tsid;
+                tp.Onid = onid;
+                _transponders[(tp.FreqMHz, tp.Pol)] = tp;
+            }
+            i += 6 + len;
+        }
+        _nitSeen.Add(s[6]);
+        if (_nitSeen.Count > s[7]) _nitDone = true;
     }
 }

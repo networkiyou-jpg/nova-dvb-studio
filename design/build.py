@@ -5,8 +5,9 @@ root = Path(__file__).parent
 src = root / 'src'
 css = (src / 'tokens.css').read_text() + (src / 'app.css').read_text()
 js = ''.join((src / f).read_text() + '\n' for f in [
-    'icons.js', 'data.js', 'i18n.js', 'core.js', 'video.js', 'shell.js',
-    'screens/tuning.js', 'screens/library.js', 'screens/access.js', 'screens/system.js', 'native.js', 'boot.js'])
+    'icons.js', 'data.js', 'i18n.js', 'i18n-more.js', 'core.js', 'video.js', 'shell.js',
+    'screens/tuning.js', 'screens/library.js', 'screens/access.js', 'screens/system.js',
+    'epg.js', 'picons-online.js', 'native.js', 'infobar.js', 'boot.js'])
 WEB_HEAD = '''<title>NOVA DVB Studio</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">

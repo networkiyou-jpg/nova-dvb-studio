@@ -55,7 +55,7 @@ function renderChrome() {
       <button class="x" data-act="win-close" aria-label="${t('Close')}" data-tip="${t('Close')}">${ic('x')}</button>
     </div><div class="clock ltr" id="clock"></div><div class="date" id="date"></div></div>`;
   $('#side').innerHTML = `<nav class="side-nav" aria-label="${t('Sections')}">${SIDE.map(([v, i, l]) => `<button data-act="go" data-v="${v}" ${S.view === v ? 'aria-current="page"' : ''} data-tip="${t(l)}">${ic(i)}<span>${t(l)}</span>${ic('chev', 'chev')}</button>`).join('')}</nav>
-    <div class="side-foot">${DISH}<b>NOVA DVB Studio</b><small>v1.0.0 &nbsp;•&nbsp; ${t('Professional Edition')}</small></div>`;
+    <div class="side-foot">${DISH}<b>NOVA DVB Studio</b><small>v0.2.0 &nbsp;•&nbsp; ${t('Professional Edition')}</small></div>`;
   renderStatus();
   tickClock();
 }
@@ -181,11 +181,14 @@ function renderPlayer() {
     <span class="vol"><input id="vol" type="range" min="0" max="100" value="${p.vol}" data-chg="vol" aria-label="${t('Volume')}" style="--val:${p.vol}%"></span><span class="sp"></span>
     ${ch ? `<button class="chip-btn solid ltr" data-act="info-pop" data-tip="${t('Stream information')}">${ch.q === 'R' ? 'AUD' : esc(ch.q)}</button>` : ''}
     <button class="icon-btn" data-act="tracks" data-tip="${t('Audio and subtitles')}" aria-label="${t('Audio and subtitles')}">${ic('cc')}</button>
+    <button class="icon-btn" data-act="infobar" ${off ? 'disabled' : ''} data-tip="${t('Info bar')} (I)" aria-label="${t('Info bar')}">${ic('info')}</button>
     <button class="icon-btn" data-act="fullscreen" data-tip="${t('Fullscreen')}" aria-label="${t('Fullscreen')}">${ic('full')}</button>
     <button class="chip-btn outline ltr" data-act="aspect" data-tip="${t('Aspect ratio')}">${t(p.aspect)}</button>
     <button class="icon-btn" data-act="theater" data-tip="${t('Video only')}" aria-label="${t('Video only')}">${ic(theater ? 'collapse' : 'expand')}</button>`;
   Audio_.sync();
+  onPlayerDrawn?.();
 }
+let onPlayerDrawn = null;   /* the info bar follows the player state */
 const tuneLine = ch => { const s = satById(ch.sat), tp = tpOf(ch); return `${s?.name || ''}  ${tp?.freq || ''} ${tp?.pol || ''}  ${tp?.sr || ''}`; };
 
 function visibleChannels() {
@@ -237,12 +240,13 @@ function renderNow() {
   const ch = curCh();
   if (!hasDevice() || !ch) { el.innerHTML = `<div class="now-id"><b>${t('Nothing tuned')}</b><small>${t('Channel details appear here after a tuner locks a transponder.')}</small></div>`; return; }
   const [n, x] = nowNext(ch), pct = n ? clamp((Date.now() - n.start) / (n.end - n.start) * 100, 0, 100) : 0;
-  if (NATIVE) { el.innerHTML = `${picon(ch)}<div class="now-id"><b>${esc(ch.name)}</b><small>${esc(ch.provider || '')}${ch.res ? ` &nbsp;|&nbsp; <span class="ltr">${ch.res}</span>` : ''}${ch.vcodec ? ` &nbsp;|&nbsp; ${ch.vcodec}` : ''}${ch.acodec ? ` &nbsp;|&nbsp; ${ch.acodec}` : ''}</small></div><span class="sp"></span><span class="hint">${t('Program data arrives in a later build')}</span>
-    <button class="icon-btn star ${ch.fav.length ? 'on' : ''}" data-act="toggle-fav" data-v="${ch.id}" aria-label="${t('Favorite')}">${ic('star')}</button><button class="icon-btn" data-act="now-menu" aria-label="${t('Channel options')}">${ic('dots')}</button>`; return; }
-  const cat = { sport: 'Sport', news: 'News', movie: 'Movies', docs: 'Documentary', kids: 'Kids', music: 'Music', radio: 'Radio' }[ch.kind];
-  el.innerHTML = `${picon(ch)}<div class="now-id"><b>${esc(ch.name)}</b><small>${t(cat)}${ch.res ? ` &nbsp;|&nbsp; <span class="ltr">${ch.res}</span> &nbsp;|&nbsp; ${ch.vcodec}` : ''} &nbsp;|&nbsp; ${ch.acodec}</small></div><span class="vr"></span>
-    <span class="pill now-p">${t('Now')}</span><div class="now-prog"><div class="col"><b>${esc(n?.title || '—')}</b><div class="prog"><i style="width:${pct}%" id="now-prog"></i></div></div><span class="tm ltr">${n ? fmtTime(n.start) + ' - ' + fmtTime(n.end) : ''}</span></div><span class="vr"></span>
-    <span class="pill next-p">${t('Next')}</span><div class="now-prog nx"><div class="col"><b>${esc(x?.title || '—')}</b><small class="ltr" style="text-align:start">${x ? fmtTime(x.start) + ' - ' + fmtTime(x.end) : ''}</small></div></div>
+  const cat = NATIVE ? esc(ch.provider || '') : t({ sport: 'Sport', news: 'News', movie: 'Movies', docs: 'Documentary', kids: 'Kids', music: 'Music', radio: 'Radio' }[ch.kind]);
+  const facts = [cat, ch.res ? `<span class="ltr">${ch.res}</span>` : '', ch.vcodec, ch.acodec].filter(Boolean).join(' &nbsp;|&nbsp; ');
+  if (!n && !x) { el.innerHTML = `${picon(ch)}<div class="now-id"><b>${esc(ch.name)}</b><small>${facts}</small></div><span class="sp"></span><span class="hint">${t('No program information for this channel yet')}</span>
+    <button class="icon-btn" data-act="infobar" aria-label="${t('Info bar')}" data-tip="${t('Info bar')}">${ic('info')}</button><button class="icon-btn star ${ch.fav.length ? 'on' : ''}" data-act="toggle-fav" data-v="${ch.id}" aria-label="${t('Favorite')}">${ic('star')}</button><button class="icon-btn" data-act="now-menu" aria-label="${t('Channel options')}">${ic('dots')}</button>`; return; }
+  el.innerHTML = `${picon(ch)}<div class="now-id"><b>${esc(ch.name)}</b><small>${facts}</small></div><span class="vr"></span>
+    <span class="pill now-p">${t('Now')}</span><div class="now-prog"><div class="col"><b dir="auto">${esc(n?.title || '—')}</b><div class="prog"><i style="width:${pct}%" id="now-prog"></i></div></div><span class="tm ltr">${n ? fmtTime(n.start) + ' - ' + fmtTime(n.end) : ''}</span></div><span class="vr"></span>
+    <span class="pill next-p">${t('Next')}</span><div class="now-prog nx"><div class="col"><b dir="auto">${esc(x?.title || '—')}</b><small class="ltr" style="text-align:start">${x ? fmtTime(x.start) + ' - ' + fmtTime(x.end) : ''}</small></div></div>
     <button class="icon-btn star ${ch.fav.length ? 'on' : ''}" data-act="toggle-fav" data-v="${ch.id}" aria-label="${t('Favorite')}" data-tip="${t('Favorite')}">${ic('star')}</button>
     <button class="icon-btn" data-act="now-menu" aria-label="${t('Channel options')}" data-tip="${t('Channel options')}">${ic('dots')}</button>`;
 }
@@ -274,7 +278,7 @@ function epgCardHTML() {
   const rows = ch && hasDevice() ? nowNext(ch, 4) : [];
   return `<div class="card-head">${ic('cal')}<h2>${t('EPG - Program Guide')}</h2></div>
     ${rows.length ? `<div class="epg-mini">${rows.map((p, i) => `<button class="${i === 0 ? 'on' : ''}" data-act="epg-open" data-v="${p.ch}|${p.id}"><span class="ltr">${fmtTime(p.start)}</span><span>${esc(p.title)}</span>${i === 0 ? ic('play', 'fill') : ''}</button>`).join('')}</div>`
-    : `<div class="empty">${ic('cal')}<span>${t(NATIVE ? 'Program data arrives in a later build' : 'Program data appears after a channel is tuned.')}</span></div>`}`;
+    : `<div class="empty">${ic('cal')}<span>${t(NATIVE ? 'Listings arrive with the broadcast once a channel is tuned.' : 'Program data appears after a channel is tuned.')}</span></div>`}`;
 }
 function toolsHTML() {
   const T = [['Scan', 'search', 'go', 'scan', ''], ['Record', 'dot', 'toggle-rec', '', 'c-rec'], ['CCcam', 'card', 'go', 'cam', ''], ['BISS', 'key', 'go', 'biss', ''],

@@ -720,6 +720,88 @@ table.tbl { width: 100%; border-collapse: separate; border-spacing: 0; font-size
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
 
+/* ---------- Info bar over the picture ---------- */
+.stage { container-type: inline-size; }
+.ib-wrap { position: absolute; inset-inline: 1.4cqw; bottom: calc(56px + .6cqw); z-index: 3; font-size: clamp(5.5px, .9cqw, 16px); opacity: 0; transform: translateY(14px); transition: opacity .22s, transform .22s; pointer-events: none; }
+.ib-wrap[data-size="compact"] { font-size: clamp(5px, .74cqw, 13px); }
+.ib-wrap[data-size="large"] { font-size: clamp(6px, 1.04cqw, 18px); }
+.ib-wrap.show { opacity: 1; transform: none; }
+.ib-wrap.show .ib-btn { pointer-events: auto; }
+.stage.ib-on .osd-tl { opacity: 0; transition: opacity .2s; }
+.ib { position: relative; display: grid; grid-template-columns: 19em 1.3em minmax(0, 1fr); grid-template-rows: 5.6em .5em 8.4em .6em 3.8em .7em 3em; padding: 1em 1.5em .9em 1.1em; border-radius: 1.9em; color: #fff; font-family: var(--font-display), var(--font-ar);
+  background: linear-gradient(180deg, rgba(22, 17, 52, .93), rgba(9, 9, 28, .95));
+  box-shadow: 0 0 1.7em color-mix(in srgb, var(--accent) 62%, transparent), 0 .7em 2.6em rgba(0, 0, 0, .55), inset 0 1px 0 rgba(255, 255, 255, .08); }
+.ib::before, .ib-logo::before { content: ""; position: absolute; inset: 0; border-radius: inherit; padding: .16em; pointer-events: none;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2) 50%, var(--accent));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; }
+.ib::after { content: ""; position: absolute; inset-inline: 12%; bottom: -.12em; height: .25em; border-radius: 50%; background: linear-gradient(90deg, transparent, var(--accent-2), var(--accent), transparent); filter: blur(.25em); opacity: .9; pointer-events: none; }
+.ib svg.i { width: 1em; height: 1em; }
+.ib-logo { position: relative; grid-column: 1; grid-row: 1 / 6; display: grid; place-items: center; border-radius: 1.7em; overflow: hidden;
+  background: radial-gradient(circle at 50% 42%, #3a2a8a, #140d38 72%); box-shadow: 0 0 1.4em color-mix(in srgb, var(--accent) 55%, transparent); }
+.ib-logo::before { padding: .17em; background: linear-gradient(140deg, var(--accent), var(--accent-2)); }
+.ib-logo img { width: 80%; height: 66%; object-fit: contain; filter: drop-shadow(0 .2em .6em rgba(0, 0, 0, .45)); }
+.ib-mono { display: inline-flex; align-items: center; gap: .15em; padding: .35em .5em; border-radius: .35em; font: 700 3.6em/1 var(--font-display); letter-spacing: .02em; box-shadow: 0 .1em .5em rgba(0, 0, 0, .4); }
+.ib-mono em { font-style: normal; background: rgba(255, 255, 255, .92); color: #101729; border-radius: .12em; padding: 0 .12em; }
+.ib-star { position: absolute; inset-block-start: .7em; inset-inline-start: .8em; font-size: 2.4em; color: #ffc531; filter: drop-shadow(0 0 .2em rgba(255, 197, 49, .6)); }
+.ib-head { grid-column: 3; grid-row: 1; display: flex; align-items: center; gap: 1.1em; min-width: 0; }
+.ib-num { flex: none; font: 700 2.4em/1 var(--font-display); padding: .32em .85em .32em .7em; border-radius: .9em .28em .9em .28em; background: linear-gradient(100deg, var(--accent), color-mix(in srgb, var(--accent) 52%, #000)); box-shadow: 0 0 .8em color-mix(in srgb, var(--accent) 50%, transparent); }
+.ib-id { flex: 1; min-width: 0; display: grid; gap: .15em; }
+.ib-id b { font: 600 2.6em/1.15 var(--font-display), var(--font-ar); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-shadow: 0 .05em .4em rgba(0, 0, 0, .5); }
+.ib-acc { display: flex; align-items: center; gap: .45em; font: 500 1.55em/1.2 var(--font-ar); color: #3ddc84; }
+.ib-acc.ca { color: #ff6b78; }
+.ib-badges { display: flex; gap: .55em; flex: none; }
+.ib-badge { font: 700 1.6em/1 var(--font-body); padding: .32em .55em .36em; border-radius: .45em; border: .12em solid rgba(255, 255, 255, .4); color: #e6e9f5; background: rgba(14, 20, 44, .5); white-space: nowrap; }
+.ib-badge.q { border-color: #3d8bff; color: #8fc0ff; font-style: italic; background: rgba(20, 50, 120, .45); }
+.ib-badge.res { border-color: #e8b33a; color: #ffcb52; }
+.ib-clock { flex: none; display: grid; justify-items: end; gap: .2em; padding-inline-start: 1.3em; margin-inline-start: .3em; border-inline-start: .12em solid color-mix(in srgb, var(--accent) 55%, transparent); }
+.ib-clock > b { font: 700 3.1em/1 var(--font-display); letter-spacing: .01em; }
+.ib-clock > span { display: flex; align-items: center; gap: .45em; font: 500 1.35em/1.2 var(--font-ar); color: #e4e7f3; white-space: nowrap; }
+.ib-clock > span svg { color: #b9a8ff; }
+.ib-epg { grid-column: 3; grid-row: 3; display: grid; grid-template-rows: 1fr 1fr; border-radius: 1.1em; overflow: hidden; background: rgba(8, 8, 26, .38); box-shadow: inset 0 0 0 .1em color-mix(in srgb, var(--accent) 38%, transparent); }
+.ib-row { display: grid; grid-template-columns: 12.6em minmax(0, 1fr) auto; align-items: center; gap: 1em; padding-inline: 2em 1.5em; min-width: 0; }
+.ib-row.cur { background: linear-gradient(90deg, rgba(59, 42, 166, .5), rgba(34, 24, 85, .18)); }
+.ib-row + .ib-row { box-shadow: inset 0 .08em 0 rgba(255, 255, 255, .13); }
+.ib-t { font: 500 1.7em/1 var(--font-display); color: #eef0f8; white-space: nowrap; }
+.ib-title { min-width: 0; display: grid; gap: .55em; }
+.ib-title b { font: 600 1.8em/1.2 var(--font-ar); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ib-row:not(.cur) .ib-title b { font-weight: 500; color: #f3f5fa; }
+.ib-prog { display: block; height: .62em; border-radius: .31em; background: rgba(255, 255, 255, .2); overflow: hidden; }
+.ib-prog i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #c04ee6, #8a5cf6); box-shadow: 0 0 .5em rgba(192, 78, 230, .6); }
+.ib-left { font: 600 1.7em/1 var(--font-display); color: #b9a8ff; white-space: nowrap; }
+.ib-none { grid-row: 1 / 3; place-self: center; font: 500 1.6em/1.3 var(--font-ar); color: #a3adc2; padding: 0 1em; text-align: center; }
+.ib-sig { grid-column: 3; grid-row: 5; display: flex; align-items: center; min-width: 0; border-radius: 1em; background: rgba(255, 255, 255, .07); box-shadow: inset 0 0 0 .07em rgba(255, 255, 255, .12); padding-inline: .3em; }
+.ib-sig > span { display: flex; align-items: center; gap: .55em; padding-inline: 1.1em; font: 500 1.55em/1 var(--font-display); white-space: nowrap; min-width: 0; }
+.ib-sig > span + span { box-shadow: -.09em 0 0 rgba(255, 255, 255, .18); }
+.ib-sat svg { color: #9eb0ff; font-size: 1.25em; } .ib-sat > span { overflow: hidden; text-overflow: ellipsis; }
+.ib-tp { color: #7fb8ff; } .ib-tp svg { font-size: 1.25em; } .ib-tp > span { white-space: pre; }
+.ib-meter { flex: 1 1 0; color: #e6e9f5; }
+.ib-meter b { font-weight: 600; }
+.ib-bar { flex: 1; min-width: 2em; height: .42em; border-radius: .3em; background: rgba(255, 255, 255, .2); overflow: hidden; }
+.ib-bar i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #16b85a, #4ae686); box-shadow: 0 0 .4em rgba(74, 230, 134, .5); transition: width .5s; }
+.ib-btns { grid-column: 1 / 4; grid-row: 7; display: flex; align-items: center; gap: 1em; padding-inline-start: .9em; }
+.ib-btn { display: inline-flex; align-items: center; gap: .5em; height: 2.3em; padding-inline: .9em 1.05em; border-radius: 1.2em; font: 600 1.32em/1 var(--font-display); color: #fff; background: rgba(255, 255, 255, .1); box-shadow: inset 0 0 0 .07em rgba(255, 255, 255, .24); transition: background .15s; }
+.ib-btn:hover { background: rgba(255, 255, 255, .2); }
+.ib-btn svg { font-size: 1.25em; }
+.ib-btn small { font: 500 .8em/1 var(--font-body), var(--font-ar); color: #aeb6cf; }
+.ib-btn.off { opacity: .45; }
+.ib-sample { display: flex; gap: 10px; align-items: center; padding: 12px; border-radius: var(--r-ctl); background: var(--grad-soft); box-shadow: inset 0 0 0 1px var(--edge-a); font-size: 13.5px; }
+.ib-sample .i { font-size: 20px; color: var(--accent-2); }
+@media (prefers-reduced-motion: reduce) { .ib-wrap { transition: none; } }
+
+/* ---------- Online logos ---------- */
+button.link { color: var(--accent-2); font: inherit; text-decoration: underline; text-underline-offset: 2px; padding: 0; background: none; cursor: pointer; }
+button.link:hover { color: var(--fg); }
+.pic-progress { display: flex; align-items: center; gap: 12px; padding: 8px 12px; border-radius: var(--r-ctl); background: var(--surface-2); font-size: 13px; }
+.pic-progress .bar { flex: 1; height: 6px; border-radius: 4px; background: var(--surface-3); overflow: hidden; }
+.pic-progress .bar i { display: block; height: 100%; background: var(--grad-meter); transition: width .3s; }
+.pf-res { min-height: 220px; max-height: min(52vh, 460px); overflow: auto; margin-top: 10px; }
+.pf-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 8px; }
+.pf-cell { display: grid; gap: 6px; justify-items: center; padding: 10px 6px 8px; border-radius: var(--r-ctl); background: #1b2140; box-shadow: inset 0 0 0 1px var(--line); font-size: 11.5px; color: var(--fg-2); min-width: 0; }
+.pf-cell:hover { box-shadow: inset 0 0 0 1px var(--edge-a); color: var(--fg); }
+.pf-cell img { width: 100px; height: 60px; object-fit: contain; }
+.pf-cell span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@container (max-width: 820px) { .ib-badge.res, .ib-clock > span { display: none; } }
+
 </style>
 <div class="backdrop" aria-hidden="true"></div>
 <div class="app" id="app">
@@ -811,7 +893,7 @@ function seedChannels() {
       sid: 1000 + i * 7, vpid: radio ? 0 : 501 + i, apid: 601 + i,
       audio: i % 2 === 0 ? ['Arabic', 'English'] : ['Arabic'],
       subs: i % 5 === 0 ? ['Arabic', 'French'] : [],
-      fta: i % 3 !== 0, fav: i < 2 ? ['g1'] : [], locked: false, hidden: false,
+      fta: i % 3 !== 0, fav: i < 2 ? ['g1'] : [], locked: false, hidden: false, txt: !radio && i % 4 === 0,
     };
   });
 }
@@ -848,6 +930,8 @@ function seedState() {
       subLang: 'Off', subSize: 100, recFolder: 'C:\\NOVA Recordings', recFormat: 'TS', recPad: 2, recPost: 5, recEpgName: true,
       epgSource: 'Broadcast (EIT)', epgDays: 7, epgUpdate: 'While tuned', epgUrl: '',
       piconFolder: 'C:\\ProgramData\\NOVA\\Picons', piconFormat: 'PNG and SVG',
+      piconSource: 'picons', piconBase: 'https://raw.githubusercontent.com/picons/picons/master/build-source/', piconCustom: '', piconStyle: 'default', piconAuto: true,
+      osdZap: true, osdSec: '5', osdSize: 'normal', osdMouse: true, epgLang: 'ara,eng,fre,fra',
       dbPath: 'C:\\ProgramData\\NOVA\\nova.db', logDays: 14, logLevel: 'Information', camEncrypt: true, camAuto: false, bissEncrypt: true, updateCheck: true,
     },
   };
@@ -896,6 +980,43 @@ const AR = {
   'channels': 'قناة', 'channels imported': 'قناة تم استيرادها', 'channels saved to your list': 'قناة حُفظت في قائمتك', 'channels.': 'قناة.', 'keys imported': 'مفتاح تم استيراده', 'logos matched by file name': 'شعار طابق اسم الملف', 'min': 'د', 'of': 'من', 'satellites imported': 'قمر تم استيراده', 'selected': 'محدد', 'simulated, no motor is connected': 'محاكاة، لا يوجد محرك متصل', 'skipped': 'تم تخطيه', 'transponders': 'تردداً',
 };
 const t = s => (S.lang === 'ar' && AR[s]) || s;
+
+/* Arabic text for the info bar, the program guide, online logos and scheduled recordings. */
+Object.assign(AR, {
+  'Info bar': 'شريط المعلومات', 'AUDIO': 'الصوت', 'SUB': 'الترجمة', 'TXT': 'تيليتكست', 'Default': 'افتراضي', 'Download': 'تنزيل', 'Clear': 'مسح', 'Open folder': 'فتح المجلد',
+  'No program information for this channel yet': 'لا توجد معلومات برامج لهذه القناة بعد', 'German': 'الألمانية', 'Spanish': 'الإسبانية', 'Turkish': 'التركية', 'Italian': 'الإيطالية', 'Portuguese': 'البرتغالية', 'Original': 'اللغة الأصلية',
+  'Teletext shows in the Windows app.': 'يظهر التيليتكست في تطبيق Windows.', 'This channel carries no teletext.': 'هذه القناة لا تبث تيليتكست.', 'Teletext on': 'التيليتكست مفعّل', 'Teletext off': 'التيليتكست متوقف',
+  'This channel has one audio track.': 'لهذه القناة مسار صوت واحد.',
+  'The info bar appears over the picture when you change channel. Press I to show or hide it.': 'يظهر شريط المعلومات فوق الصورة عند تغيير القناة. اضغط I لإظهاره أو إخفائه.',
+  'Show on channel change': 'إظهاره عند تغيير القناة', 'Show for': 'مدة الظهور', '3 seconds': '3 ثوانٍ', '5 seconds': '5 ثوانٍ', '8 seconds': '8 ثوانٍ', '12 seconds': '12 ثانية', 'Until I hide it': 'حتى أخفيه',
+  'Large': 'كبير', 'Show when the mouse moves over the picture': 'إظهاره عند تحريك الفأرة فوق الصورة', 'Show it now': 'أظهره الآن',
+  'From the broadcast': 'من البث', 'From XMLTV': 'من XMLTV', 'Update listings': 'تحديث البرامج', 'Load XMLTV file': 'تحميل ملف XMLTV', 'Load from address': 'تحميل من العنوان', 'Clear listings': 'مسح البرامج',
+  'Load your XMLTV guide with the button above.': 'حمّل دليل XMLTV بالزر في الأعلى.',
+  'Broadcast listings are read from the tuned transponder. Many satellites also carry the guide for other transponders.': 'تُقرأ البرامج من التردد الملتقط. كثير من الأقمار تبث أيضاً دليل الترددات الأخرى.',
+  'Preferred listing language': 'لغة الدليل المفضلة', 'Use a source you are allowed to use. Gzip files work too.': 'استخدم مصدراً مسموحاً لك باستخدامه. ملفات Gzip مدعومة أيضاً.',
+  'That file could not be read.': 'تعذرت قراءة هذا الملف.', 'Enter an XMLTV address that starts with http:// or https://': 'أدخل عنوان XMLTV يبدأ بـ http:// أو https://',
+  'Downloading listings': 'جارٍ تنزيل البرامج', 'Could not download the listings. Check the address and the internet connection.': 'تعذر تنزيل البرامج. تحقق من العنوان والاتصال بالإنترنت.',
+  'programs for': 'برنامجاً لـ', 'That is not an XMLTV guide.': 'هذا ليس دليل XMLTV.', 'Clear all listings?': 'مسح كل البرامج؟',
+  'Listings from the broadcast come back while a channel is tuned.': 'تعود برامج البث أثناء التقاط قناة.', 'Listings cleared': 'تم مسح البرامج',
+  'Scheduled recordings start by themselves while NOVA is open.': 'تبدأ التسجيلات المجدولة تلقائياً ما دام NOVA مفتوحاً.',
+  'Scheduled recordings run only while NOVA is open.': 'التسجيلات المجدولة تعمل فقط ما دام NOVA مفتوحاً.',
+  'Scheduled recording': 'تسجيل مجدول', 'Scheduled recording skipped, the tuner is busy': 'تم تخطي التسجيل المجدول، الموالف مشغول',
+  'A recording is running on another transponder. Stop it first, or pick a channel on the same transponder.': 'يوجد تسجيل على تردد آخر. أوقفه أولاً، أو اختر قناة على التردد نفسه.',
+  'Download logos from the internet': 'تنزيل الشعارات من الإنترنت', 'Logo source': 'مصدر الشعارات', 'picons project (GitHub)': 'مشروع picons (GitHub)', 'My own server': 'خادمي الخاص',
+  'NOVA matches each channel by its service reference, then by its name.': 'يطابق NOVA كل قناة بمرجع الخدمة أولاً، ثم باسمها.',
+  'Address pattern': 'نمط العنوان', 'Use {srp} for the Enigma2 picon name (1_0_19_...), {snp} for the simplified name, {name} for the channel name.': 'استخدم {srp} لاسم بيكون Enigma2 (1_0_19_...)، و{snp} للاسم المبسط، و{name} لاسم القناة.',
+  'Project address': 'عنوان المشروع', 'Change only if you use a copy of the picons project.': 'غيّره فقط إن كنت تستخدم نسخة من مشروع picons.',
+  'Logo style': 'نمط الشعار', 'Light (for dark backgrounds)': 'فاتح (للخلفيات الداكنة)', 'Dark (for light backgrounds)': 'داكن (للخلفيات الفاتحة)',
+  'Download logos for new channels after a scan': 'تنزيل شعارات القنوات الجديدة بعد البحث', 'Download missing logos': 'تنزيل الشعارات الناقصة', 'Refresh logo index': 'تحديث فهرس الشعارات',
+  'Open the picons website': 'فتح موقع picons', 'Logo files': 'ملفات الشعارات', 'Downloaded logos are kept here.': 'تُحفظ الشعارات المنزّلة هنا.', 'Logos': 'الشعارات',
+  'Logos are already downloading.': 'الشعارات قيد التنزيل بالفعل.', 'Could not load the logo index. Check the internet connection.': 'تعذر تحميل فهرس الشعارات. تحقق من الاتصال بالإنترنت.',
+  'logos downloaded': 'شعار تم تنزيله', 'Download logos': 'تنزيل الشعارات', 'Logos come from your own server, using the address pattern in Settings.': 'تأتي الشعارات من خادمك الخاص، بنمط العنوان في الإعدادات.',
+  'Logos come from the picons project, a free collection made by its contributors.': 'تأتي الشعارات من مشروع picons، وهو مجموعة مجانية يصنعها المساهمون فيه.',
+  'Without a logo': 'بدون شعار', 'All channels, replace existing': 'كل القنوات، مع استبدال الموجود', 'Downloading the logo index': 'جارٍ تنزيل فهرس الشعارات', 'Logo index ready': 'فهرس الشعارات جاهز',
+  'Loading the logo index': 'جارٍ تحميل فهرس الشعارات', 'Type at least two letters.': 'اكتب حرفين على الأقل.', 'No logos match': 'لا توجد شعارات مطابقة', 'Find a logo': 'البحث عن شعار', 'Search logos': 'ابحث في الشعارات',
+  'That logo could not be downloaded.': 'تعذر تنزيل هذا الشعار.', 'your own server': 'خادمك الخاص', 'Logo settings': 'إعدادات الشعارات', 'Downloading logos': 'جارٍ تنزيل الشعارات',
+  'Channel logos from the internet or from your own files. PNG and SVG, transparent backgrounds supported.': 'شعارات القنوات من الإنترنت أو من ملفاتك. يدعم PNG وSVG والخلفيات الشفافة.',
+});
 
 /* Core: state, persistence, helpers, shared UI (toasts, modals, popovers, tooltips, files). */
 const STORE_KEY = 'nova-dvb-studio.v1';
@@ -1396,7 +1517,7 @@ function renderChrome() {
       <button class="x" data-act="win-close" aria-label="${t('Close')}" data-tip="${t('Close')}">${ic('x')}</button>
     </div><div class="clock ltr" id="clock"></div><div class="date" id="date"></div></div>`;
   $('#side').innerHTML = `<nav class="side-nav" aria-label="${t('Sections')}">${SIDE.map(([v, i, l]) => `<button data-act="go" data-v="${v}" ${S.view === v ? 'aria-current="page"' : ''} data-tip="${t(l)}">${ic(i)}<span>${t(l)}</span>${ic('chev', 'chev')}</button>`).join('')}</nav>
-    <div class="side-foot">${DISH}<b>NOVA DVB Studio</b><small>v1.0.0 &nbsp;•&nbsp; ${t('Professional Edition')}</small></div>`;
+    <div class="side-foot">${DISH}<b>NOVA DVB Studio</b><small>v0.2.0 &nbsp;•&nbsp; ${t('Professional Edition')}</small></div>`;
   renderStatus();
   tickClock();
 }
@@ -1522,11 +1643,14 @@ function renderPlayer() {
     <span class="vol"><input id="vol" type="range" min="0" max="100" value="${p.vol}" data-chg="vol" aria-label="${t('Volume')}" style="--val:${p.vol}%"></span><span class="sp"></span>
     ${ch ? `<button class="chip-btn solid ltr" data-act="info-pop" data-tip="${t('Stream information')}">${ch.q === 'R' ? 'AUD' : esc(ch.q)}</button>` : ''}
     <button class="icon-btn" data-act="tracks" data-tip="${t('Audio and subtitles')}" aria-label="${t('Audio and subtitles')}">${ic('cc')}</button>
+    <button class="icon-btn" data-act="infobar" ${off ? 'disabled' : ''} data-tip="${t('Info bar')} (I)" aria-label="${t('Info bar')}">${ic('info')}</button>
     <button class="icon-btn" data-act="fullscreen" data-tip="${t('Fullscreen')}" aria-label="${t('Fullscreen')}">${ic('full')}</button>
     <button class="chip-btn outline ltr" data-act="aspect" data-tip="${t('Aspect ratio')}">${t(p.aspect)}</button>
     <button class="icon-btn" data-act="theater" data-tip="${t('Video only')}" aria-label="${t('Video only')}">${ic(theater ? 'collapse' : 'expand')}</button>`;
   Audio_.sync();
+  onPlayerDrawn?.();
 }
+let onPlayerDrawn = null;   /* the info bar follows the player state */
 const tuneLine = ch => { const s = satById(ch.sat), tp = tpOf(ch); return `${s?.name || ''}  ${tp?.freq || ''} ${tp?.pol || ''}  ${tp?.sr || ''}`; };
 
 function visibleChannels() {
@@ -1578,12 +1702,13 @@ function renderNow() {
   const ch = curCh();
   if (!hasDevice() || !ch) { el.innerHTML = `<div class="now-id"><b>${t('Nothing tuned')}</b><small>${t('Channel details appear here after a tuner locks a transponder.')}</small></div>`; return; }
   const [n, x] = nowNext(ch), pct = n ? clamp((Date.now() - n.start) / (n.end - n.start) * 100, 0, 100) : 0;
-  if (NATIVE) { el.innerHTML = `${picon(ch)}<div class="now-id"><b>${esc(ch.name)}</b><small>${esc(ch.provider || '')}${ch.res ? ` &nbsp;|&nbsp; <span class="ltr">${ch.res}</span>` : ''}${ch.vcodec ? ` &nbsp;|&nbsp; ${ch.vcodec}` : ''}${ch.acodec ? ` &nbsp;|&nbsp; ${ch.acodec}` : ''}</small></div><span class="sp"></span><span class="hint">${t('Program data arrives in a later build')}</span>
-    <button class="icon-btn star ${ch.fav.length ? 'on' : ''}" data-act="toggle-fav" data-v="${ch.id}" aria-label="${t('Favorite')}">${ic('star')}</button><button class="icon-btn" data-act="now-menu" aria-label="${t('Channel options')}">${ic('dots')}</button>`; return; }
-  const cat = { sport: 'Sport', news: 'News', movie: 'Movies', docs: 'Documentary', kids: 'Kids', music: 'Music', radio: 'Radio' }[ch.kind];
-  el.innerHTML = `${picon(ch)}<div class="now-id"><b>${esc(ch.name)}</b><small>${t(cat)}${ch.res ? ` &nbsp;|&nbsp; <span class="ltr">${ch.res}</span> &nbsp;|&nbsp; ${ch.vcodec}` : ''} &nbsp;|&nbsp; ${ch.acodec}</small></div><span class="vr"></span>
-    <span class="pill now-p">${t('Now')}</span><div class="now-prog"><div class="col"><b>${esc(n?.title || '—')}</b><div class="prog"><i style="width:${pct}%" id="now-prog"></i></div></div><span class="tm ltr">${n ? fmtTime(n.start) + ' - ' + fmtTime(n.end) : ''}</span></div><span class="vr"></span>
-    <span class="pill next-p">${t('Next')}</span><div class="now-prog nx"><div class="col"><b>${esc(x?.title || '—')}</b><small class="ltr" style="text-align:start">${x ? fmtTime(x.start) + ' - ' + fmtTime(x.end) : ''}</small></div></div>
+  const cat = NATIVE ? esc(ch.provider || '') : t({ sport: 'Sport', news: 'News', movie: 'Movies', docs: 'Documentary', kids: 'Kids', music: 'Music', radio: 'Radio' }[ch.kind]);
+  const facts = [cat, ch.res ? `<span class="ltr">${ch.res}</span>` : '', ch.vcodec, ch.acodec].filter(Boolean).join(' &nbsp;|&nbsp; ');
+  if (!n && !x) { el.innerHTML = `${picon(ch)}<div class="now-id"><b>${esc(ch.name)}</b><small>${facts}</small></div><span class="sp"></span><span class="hint">${t('No program information for this channel yet')}</span>
+    <button class="icon-btn" data-act="infobar" aria-label="${t('Info bar')}" data-tip="${t('Info bar')}">${ic('info')}</button><button class="icon-btn star ${ch.fav.length ? 'on' : ''}" data-act="toggle-fav" data-v="${ch.id}" aria-label="${t('Favorite')}">${ic('star')}</button><button class="icon-btn" data-act="now-menu" aria-label="${t('Channel options')}">${ic('dots')}</button>`; return; }
+  el.innerHTML = `${picon(ch)}<div class="now-id"><b>${esc(ch.name)}</b><small>${facts}</small></div><span class="vr"></span>
+    <span class="pill now-p">${t('Now')}</span><div class="now-prog"><div class="col"><b dir="auto">${esc(n?.title || '—')}</b><div class="prog"><i style="width:${pct}%" id="now-prog"></i></div></div><span class="tm ltr">${n ? fmtTime(n.start) + ' - ' + fmtTime(n.end) : ''}</span></div><span class="vr"></span>
+    <span class="pill next-p">${t('Next')}</span><div class="now-prog nx"><div class="col"><b dir="auto">${esc(x?.title || '—')}</b><small class="ltr" style="text-align:start">${x ? fmtTime(x.start) + ' - ' + fmtTime(x.end) : ''}</small></div></div>
     <button class="icon-btn star ${ch.fav.length ? 'on' : ''}" data-act="toggle-fav" data-v="${ch.id}" aria-label="${t('Favorite')}" data-tip="${t('Favorite')}">${ic('star')}</button>
     <button class="icon-btn" data-act="now-menu" aria-label="${t('Channel options')}" data-tip="${t('Channel options')}">${ic('dots')}</button>`;
 }
@@ -1615,7 +1740,7 @@ function epgCardHTML() {
   const rows = ch && hasDevice() ? nowNext(ch, 4) : [];
   return `<div class="card-head">${ic('cal')}<h2>${t('EPG - Program Guide')}</h2></div>
     ${rows.length ? `<div class="epg-mini">${rows.map((p, i) => `<button class="${i === 0 ? 'on' : ''}" data-act="epg-open" data-v="${p.ch}|${p.id}"><span class="ltr">${fmtTime(p.start)}</span><span>${esc(p.title)}</span>${i === 0 ? ic('play', 'fill') : ''}</button>`).join('')}</div>`
-    : `<div class="empty">${ic('cal')}<span>${t(NATIVE ? 'Program data arrives in a later build' : 'Program data appears after a channel is tuned.')}</span></div>`}`;
+    : `<div class="empty">${ic('cal')}<span>${t(NATIVE ? 'Listings arrive with the broadcast once a channel is tuned.' : 'Program data appears after a channel is tuned.')}</span></div>`}`;
 }
 function toolsHTML() {
   const T = [['Scan', 'search', 'go', 'scan', ''], ['Record', 'dot', 'toggle-rec', '', 'c-rec'], ['CCcam', 'card', 'go', 'cam', ''], ['BISS', 'key', 'go', 'biss', ''],
@@ -1988,7 +2113,7 @@ SCREENS.scan = () => {
         <label class="check"><input id="scan-tv" type="checkbox" data-chg="scan-opt" data-k="tv" ${scan.tv ? 'checked' : ''}>${t('TV channels')}</label>
         <label class="check"><input id="scan-radio" type="checkbox" data-chg="scan-opt" data-k="radio" ${scan.radio ? 'checked' : ''}>${t('Radio channels')}</label>
         <label class="check"><input id="scan-fta" type="checkbox" data-chg="scan-opt" data-k="fta" ${scan.fta ? 'checked' : ''}>${t('Free-to-air only')}</label>
-        ${NATIVE ? '' : `<label class="check"><input id="scan-net" type="checkbox" data-chg="scan-opt" data-k="net" ${scan.net ? 'checked' : ''}>${t('Read network table (NIT) for new transponders')}</label>`}
+        ${scan.mode === 'manual' ? '' : `<label class="check"><input id="scan-net" type="checkbox" data-chg="scan-opt" data-k="net" ${scan.net ? 'checked' : ''}>${t('Read network table (NIT) for new transponders')}</label>`}
         </fieldset>${devNote}</section>
       <section class="card pane"><div class="card-head">${ic('signal')}<h2>${t('Progress')}</h2><span class="sp"></span><span class="sub ltr">${scan.tps.length ? Math.min(scan.i, scan.tps.length) + ' / ' + scan.tps.length : ''}</span></div>
         <div class="scan-ring"><svg viewBox="0 0 150 150"><circle cx="75" cy="75" r="${r}" fill="none" stroke="var(--surface-3)" stroke-width="9"/><circle cx="75" cy="75" r="${r}" fill="none" stroke="var(--accent-2)" stroke-width="9" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${c * (1 - scan.pct / 100)}"/></svg><b>${Math.round(scan.pct)}%</b></div>
@@ -2143,7 +2268,7 @@ const EG = { day: 0, q: '', group: 'tv' };
 const PX = 3.4;
 SCREENS.epg = () => {
   const base = new Date(); base.setHours(0, 0, 0, 0); base.setDate(base.getDate() + EG.day);
-  const d0 = base.getTime(), d1 = d0 + 864e5, list = chans().filter(c => !c.hidden && (EG.group === 'all' || (EG.group === 'fav' ? c.fav.length : c.type === EG.group))).slice(0, 26);
+  const d0 = base.getTime(), d1 = d0 + 864e5, list = chans().filter(c => !c.hidden && (EG.group === 'all' || (EG.group === 'fav' ? c.fav.length : c.type === EG.group))).slice(0, 150);
   const q = EG.q.trim().toLowerCase();
   const hits = q ? list.flatMap(c => epgFor(c).filter(p => p.end > Date.now() && p.title.toLowerCase().includes(q)).map(p => ({ c, p }))).sort((a, b) => a.p.start - b.p.start).slice(0, 60) : [];
   const nowX = (Date.now() - d0) / 6e4 * PX;
@@ -2153,16 +2278,22 @@ SCREENS.epg = () => {
       ${epgFor(c).filter(p => p.end > d0 && p.start < d1).map(p => { const a = Math.max(p.start, d0), b = Math.min(p.end, d1), x = offs + (a - d0) / 6e4 * PX, w = (b - a) / 6e4 * PX - 3, now = p.start <= Date.now() && p.end > Date.now(), tm = S.timers.some(k => k.pid === p.id);
     return `<button class="epg-p ${now ? 'is-now' : ''} ${tm ? 'timer' : ''}" style="inset-inline-start:${x}px;width:${w}px" data-act="epg-open" data-v="${c.id}|${p.id}"><b>${esc(p.title)}</b><small class="ltr">${fmtTime(p.start)} - ${fmtTime(p.end)}</small></button>`; }).join('')}</div>`).join('')}
     ${EG.day === 0 ? `<div class="epg-line" style="inset-inline-start:${offs + nowX}px"></div>` : ''}</div></div>`;
-  return `<div class="page">${pageHead('cal', 'Program Guide', 'What is on now and next. Pick a program to watch it or schedule a recording.', `<span class="hint">${t(!NATIVE && hasDevice() ? 'Sample listings' : 'No listings yet')}</span>`)}
+  const anyData = list.some(c => epgFor(c).length), live = hasLiveEpg();
+  const src = S.settings.epgSource || 'Broadcast (EIT)';
+  const headActs = `<span class="hint">${t(live ? (src === 'Broadcast (EIT)' ? 'From the broadcast' : 'From XMLTV') : !NATIVE && anyData ? 'Sample listings' : 'No listings yet')}</span>
+    ${src === 'XMLTV address' ? `<button class="btn" data-act="epg-xmltv-url">${ic('refresh')}${t('Update listings')}</button>` : ''}
+    ${src === 'XMLTV file' ? `<button class="btn" data-act="epg-xmltv-file">${ic('upload')}${t('Load XMLTV file')}</button>` : ''}
+    ${live ? `<button class="btn" data-act="epg-clear">${ic('trash')}${t('Clear')}</button>` : ''}`;
+  return `<div class="page">${pageHead('cal', 'Program Guide', 'What is on now and next. Pick a program to watch it or schedule a recording.', headActs)}
     <section class="card pane" style="flex:1"><div class="row">
-      <button class="icon-btn" data-act="epg-day" data-v="-1" aria-label="${t('Previous day')}" data-tip="${t('Previous day')}" ${EG.day <= -1 ? 'disabled' : ''}>${ic('prev')}</button><b style="min-width:128px;text-align:center">${EG.day === 0 ? t('Today') : fmtDayShort(d0)}</b><button class="icon-btn" data-act="epg-day" data-v="1" aria-label="${t('Next day')}" data-tip="${t('Next day')}" ${EG.day >= 1 ? 'disabled' : ''}>${ic('next')}</button>
+      <button class="icon-btn" data-act="epg-day" data-v="-1" aria-label="${t('Previous day')}" data-tip="${t('Previous day')}" ${EG.day <= -1 ? 'disabled' : ''}>${ic('prev')}</button><b style="min-width:128px;text-align:center">${EG.day === 0 ? t('Today') : fmtDayShort(d0)}</b><button class="icon-btn" data-act="epg-day" data-v="1" aria-label="${t('Next day')}" data-tip="${t('Next day')}" ${EG.day >= Math.min(6, (Number(S.settings.epgDays) || 7) - 1) ? 'disabled' : ''}>${ic('next')}</button>
       <div class="seg" style="width:260px">${[['tv', 'TV'], ['radio', 'Radio'], ['fav', 'Favorites']].map(([v, l]) => `<button data-act="epg-grp" data-v="${v}" aria-pressed="${EG.group === v}">${t(l)}</button>`).join('')}</div>
       <span class="sp"></span><label class="search" style="width:min(300px,100%)">${ic('search')}<input id="epg-q" type="search" value="${esc(EG.q)}" placeholder="${t('Search programs...')}" data-chg="epg-q" aria-label="${t('Search programs...')}"></label></div>
-      ${NATIVE || !list.length ? `<div class="empty">${ic('cal')}<b>${t('No program data')}</b><span>${t('Listings arrive with the broadcast once a channel is tuned.')}</span></div>` : q ? `<div class="scroll" style="display:grid;gap:2px;align-content:start;flex:1">${hits.map(({ c, p }) => `<button class="list-item" data-act="epg-open" data-v="${c.id}|${p.id}">${picon(c)}<div><b>${esc(p.title)}</b><small>${esc(c.name)} &nbsp;•&nbsp; <span class="ltr">${fmtDayShort(p.start)} ${fmtTime(p.start)}</span></small></div></button>`).join('') || `<div class="empty">${ic('search')}<span>${t('No programs match')}</span></div>`}</div>` : grid}
+      ${!anyData ? `<div class="empty">${ic('cal')}<b>${t('No program data')}</b><span>${t(src === 'Broadcast (EIT)' ? 'Listings arrive with the broadcast once a channel is tuned.' : 'Load your XMLTV guide with the button above.')}</span></div>` : q ? `<div class="scroll" style="display:grid;gap:2px;align-content:start;flex:1">${hits.map(({ c, p }) => `<button class="list-item" data-act="epg-open" data-v="${c.id}|${p.id}">${picon(c)}<div><b>${esc(p.title)}</b><small>${esc(c.name)} &nbsp;•&nbsp; <span class="ltr">${fmtDayShort(p.start)} ${fmtTime(p.start)}</span></small></div></button>`).join('') || `<div class="empty">${ic('search')}<span>${t('No programs match')}</span></div>`}</div>` : grid}
     </section></div>`;
 };
 SCREENS.epg.mount = () => { const g = $('#epg-grid'); if (g && EG.day === 0) g.scrollLeft = Math.max(0, (Date.now() - new Date().setHours(0, 0, 0, 0)) / 6e4 * PX - 120) * (S.lang === 'ar' ? -1 : 1); };
-A['epg-day'] = el => { EG.day = clamp(EG.day + Number(el.dataset.v), -1, 1); renderView(); };
+A['epg-day'] = el => { EG.day = clamp(EG.day + Number(el.dataset.v), -1, Math.min(6, (Number(S.settings.epgDays) || 7) - 1)); renderView(); };
 A['epg-grp'] = el => { EG.group = el.dataset.v; renderView(); };
 CHG['epg-q'] = el => { EG.q = el.value; const pos = el.selectionStart; renderView(); const i = $('#epg-q'); i.focus(); i.setSelectionRange(pos, pos); };
 function openProgramme(ch, p) {
@@ -2175,7 +2306,7 @@ function openProgramme(ch, p) {
   };
   A[id2] = () => { closeModal(); go('live'); tune(ch.id); };
   openModal({ title: p.title, width: 480, body: `<div class="row">${picon(ch)}<b>${esc(ch.name)}</b></div>
-    <dl class="kv dl-plain"><dt>${t('Date')}</dt><dd>${fmtDay(p.start)}</dd><dt>${t('Time')}</dt><dd class="ltr" style="text-align:start">${fmtTime(p.start)} - ${fmtTime(p.end)}</dd><dt>${t('Length')}</dt><dd>${Math.round((p.end - p.start) / 6e4)} ${t('min')}</dd></dl><p class="sub">${t(p.desc)}</p>`,
+    <dl class="kv dl-plain"><dt>${t('Date')}</dt><dd>${fmtDay(p.start)}</dd><dt>${t('Time')}</dt><dd class="ltr" style="text-align:start">${fmtTime(p.start)} - ${fmtTime(p.end)}</dd><dt>${t('Length')}</dt><dd>${Math.round((p.end - p.start) / 6e4)} ${t('min')}</dd></dl><p class="sub" dir="auto">${esc(p.desc === EPG_DESC ? t(p.desc) : p.desc || '')}</p>`,
     foot: `<button class="btn" data-act="modal-close">${t('Close')}</button><button class="btn" data-act="${id2}">${ic('play')}${t('Watch channel')}</button>${past ? '' : `<button class="btn primary" data-act="${id}">${ic('dot')}${t(has ? 'Cancel recording' : 'Schedule recording')}</button>`}` });
 }
 
@@ -2190,7 +2321,7 @@ SCREENS.recordings = () => {
       <div class="stat"><small>${t('Free space')}</small><b class="ltr" style="text-align:start">${diskFree()} GB</b>${NATIVE ? '' : `<span class="bar"><i style="width:${(1 - DISK.free / DISK.total) * 100}%;background:var(--grad)"></i></span>`}</div>
       <div class="stat"><small>${t('Used by recordings')}</small><b class="ltr" style="text-align:start">${used.toFixed(1)} GB</b></div>
       <div class="stat"><small>${t('Recorded programs')}</small><b>${S.recordings.length}</b></div><div class="stat"><small>${t('Scheduled')}</small><b>${S.timers.length}</b></div></div>
-      <div class="row hint">${ic('folder')}<span class="ltr">${esc(S.settings.recFolder)}</span><span class="sp"></span><span>${t(NATIVE ? 'Scheduled recordings do not start by themselves in this build.' : 'Sample figures in this preview')}</span></div></section>
+      <div class="row hint">${ic('folder')}<span class="ltr">${esc(S.settings.recFolder)}</span><span class="sp"></span><span>${t(NATIVE ? 'Scheduled recordings start by themselves while NOVA is open.' : 'Sample figures in this preview')}</span></div></section>
     <div class="panes" style="grid-template-columns:minmax(0,1.5fr) minmax(0,1fr)">
       <section class="card pane"><div class="card-head">${ic('film')}<h2>${t('Recorded')}</h2></div><div class="tbl-wrap"><table class="tbl"><thead><tr><th>${t('Program')}</th><th>${t('Channel')}</th><th>${t('Date')}</th><th>${t('Length')}</th><th>${t('Size')}</th><th></th></tr></thead><tbody>
         ${S.recordings.map(r => `<tr><td>${esc(r.title)}</td><td>${esc(chById(r.ch)?.name || '—')}</td><td>${fmtDayShort(r.at)}</td><td>${r.mins} ${t('min')}</td><td class="ltr">${r.gb} GB</td><td><div class="acts"><button class="icon-btn" data-act="rec-play" data-v="${r.id}" aria-label="${t('Play')}" data-tip="${t('Play')}">${ic('play')}</button><button class="icon-btn" data-act="rec-del" data-v="${r.id}" aria-label="${t('Delete')}" data-tip="${t('Delete')}">${ic('trash')}</button></div></td></tr>`).join('')}</tbody></table>
@@ -2319,13 +2450,16 @@ const norm = s => s.toLowerCase().replace(/\.[a-z0-9]+$/, '').replace(/[^a-z0-9]
 SCREENS.picons = () => {
   const all = chans(), missing = all.filter(c => !S.picons[c.id]);
   const list = (PM.filter === 'missing' ? missing : all).filter(c => c.name.toLowerCase().includes(PM.q.toLowerCase()));
-  return `<div class="page">${pageHead('pic', 'Picon Manager', 'Channel logos from your own files. PNG and SVG, transparent backgrounds supported.', `<button class="btn primary" data-act="pic-bulk" ${all.length ? '' : 'disabled'}>${ic('upload')}${t('Import logo set')}</button>`)}
+  const src = S.settings.piconSource === 'custom' ? t('your own server') : 'picons (github.com/picons/picons)';
+  return `<div class="page">${pageHead('pic', 'Picon Manager', 'Channel logos from the internet or from your own files. PNG and SVG, transparent backgrounds supported.', `<button class="btn" data-act="pic-bulk" ${all.length ? '' : 'disabled'}>${ic('upload')}${t('Import logo set')}</button><button class="btn primary" data-act="pic-online" ${all.length && !PIC.busy ? '' : 'disabled'}>${ic('download')}${t('Download logos')}</button>`)}
+    <div class="note">${ic('globe')}<div>${t('Logo source')}: <b class="ltr">${esc(src)}</b>. ${t('NOVA matches each channel by its service reference, then by its name.')} <button class="link" data-act="pic-site">${t('Open the picons website')}</button> <button class="link" data-act="open-settings" data-v="picons">${t('Logo settings')}</button></div></div>
+    ${PIC.busy ? `<div class="pic-progress"><span>${t('Downloading logos')}: ${PIC.done} / ${PIC.total}</span><span class="bar"><i style="width:${PIC.total ? PIC.done / PIC.total * 100 : 0}%"></i></span></div>` : ''}
     <section class="card pane" style="flex:1"><div class="row">
       <div class="seg" style="width:240px"><button data-act="pic-f" data-v="all" aria-pressed="${PM.filter === 'all'}">${t('All')} (${all.length})</button><button data-act="pic-f" data-v="missing" aria-pressed="${PM.filter === 'missing'}">${t('Missing')} (${missing.length})</button></div>
       <label class="search" style="flex:1 1 180px">${ic('search')}<input id="pic-q" type="search" value="${esc(PM.q)}" placeholder="${t('Search channels...')}" data-chg="pic-q" aria-label="${t('Search channels...')}"></label>
       <label class="row nw"><span class="lbl">${t('Size')}</span><input id="pic-size" type="range" min="44" max="110" value="${S.piconSize}" style="width:130px;--val:${(S.piconSize - 44) / 66 * 100}%" data-chg="pic-size" aria-label="${t('Size')}"></label></div>
       <div class="scroll" style="--ps:${S.piconSize}px" id="pic-scroll">${all.length ? `<div class="pic-grid">${list.map(c => `<div class="pic-cell">${picon(c)}<span class="nm" data-tip="${esc(c.name)}">${esc(c.name)}</span><div class="acts">
-        <button class="icon-btn" data-act="pic-view" data-v="${c.id}" aria-label="${t('Preview')}" data-tip="${t('Preview')}" ${S.picons[c.id] ? '' : 'disabled'}>${ic('eye')}</button><button class="icon-btn" data-act="pic-set" data-v="${c.id}" aria-label="${t('Replace')}" data-tip="${t('Choose a logo file')}">${ic('upload')}</button><button class="icon-btn" data-act="pic-del" data-v="${c.id}" aria-label="${t('Delete')}" data-tip="${t('Delete')}" ${S.picons[c.id] ? '' : 'disabled'}>${ic('trash')}</button></div></div>`).join('')}</div>${list.length ? '' : `<div class="empty">${ic('check')}<span>${t('Every channel has a logo.')}</span></div>`}` : `<div class="empty">${ic('pic')}<b>${t('No channels yet')}</b><span>${t('Logos attach to channels. Scan or import channels first.')}</span></div>`}</div></section></div>`;
+        <button class="icon-btn" data-act="pic-view" data-v="${c.id}" aria-label="${t('Preview')}" data-tip="${t('Preview')}" ${S.picons[c.id] ? '' : 'disabled'}>${ic('eye')}</button><button class="icon-btn" data-act="pic-find" data-v="${c.id}" aria-label="${t('Find a logo')}" data-tip="${t('Find a logo')}">${ic('globe')}</button><button class="icon-btn" data-act="pic-set" data-v="${c.id}" aria-label="${t('Replace')}" data-tip="${t('Choose a logo file')}">${ic('upload')}</button><button class="icon-btn" data-act="pic-del" data-v="${c.id}" aria-label="${t('Delete')}" data-tip="${t('Delete')}" ${S.picons[c.id] ? '' : 'disabled'}>${ic('trash')}</button></div></div>`).join('')}</div>${list.length ? '' : `<div class="empty">${ic('check')}<span>${t('Every channel has a logo.')}</span></div>`}` : `<div class="empty">${ic('pic')}<b>${t('No channels yet')}</b><span>${t('Logos attach to channels. Scan or import channels first.')}</span></div>`}</div></section></div>`;
 };
 A['pic-f'] = el => { PM.filter = el.dataset.v; refresh(); };
 CHG['pic-q'] = el => { PM.q = el.value; const p = el.selectionStart; refresh(); const i = $('#pic-q'); i.focus(); i.setSelectionRange(p, p); };
@@ -2403,7 +2537,7 @@ A['skin-install'] = async () => {
 
 /* ---------- Settings ---------- */
 let setCat = 'general';
-const CATS = [['general', 'tune', 'General'], ['devices', 'cpu', 'DVB Devices'], ['satellite', 'sat', 'Satellite Settings'], ['diseqc', 'compass', 'DiSEqC & Motor'], ['playback', 'play', 'Playback'], ['audio', 'vol', 'Audio'], ['video', 'film', 'Video'],
+const CATS = [['general', 'tune', 'General'], ['devices', 'cpu', 'DVB Devices'], ['satellite', 'sat', 'Satellite Settings'], ['diseqc', 'compass', 'DiSEqC & Motor'], ['playback', 'play', 'Playback'], ['osd', 'info', 'Info bar'], ['audio', 'vol', 'Audio'], ['video', 'film', 'Video'],
   ['cam', 'card', 'CAM'], ['biss', 'key', 'BISS'], ['recording', 'rec', 'Recording'], ['epg', 'cal', 'EPG'], ['picons', 'pic', 'Picons'], ['themes', 'skin', 'Themes'], ['storage', 'drive', 'Storage'], ['backup', 'archive', 'Backup & Restore'], ['language', 'globe', 'Language']];
 const sRow = (label, sub, ctl, free) => `<div class="set-row"><div><b>${t(label)}</b>${sub ? `<small>${t(sub)}</small>` : ''}</div><div class="ctl ${free ? 'free' : ''}">${ctl}</div></div>`;
 const sSw = (k, label, sub, dis) => sRow(label, sub, `<label class="switch"><input id="set-${k}" type="checkbox" data-chg="set" data-k="${k}" ${S.settings[k] ? 'checked' : ''} ${dis ? 'disabled' : ''} aria-label="${t(label)}"><i></i></label>`, true);
@@ -2419,13 +2553,28 @@ const CAT_BODY = {
   diseqc: () => `${sSel('diseqc', 'DiSEqC mode', ['None', '1.0', '1.1', '1.2'], 'Ports and motor positions are set per satellite in Satellite Manager.')}
     <div class="set-h">${t('Move dish')}</div><div class="row">${[['West', 'Move west'], ['Stop', 'Stop motor'], ['East', 'Move east'], ['Reference', 'Go to reference'], ['Store', 'Store position']].map(([k, l]) => `<button class="btn sm" data-act="motor" data-v="${l}" ${hasDevice() ? '' : 'disabled'}>${t(l)}</button>`).join('')}</div>${hasDevice() ? '' : `<p class="hint">${t('Motor commands need a connected tuner.')}</p>`}`,
   playback: () => sSel('decoder', 'Decoder', ['Auto', 'LibVLC', 'Software only']) + sSw('hwAccel', 'Hardware decoding when available') + sTxt('buffer', 'Stream buffer (ms)', 'Higher is steadier, lower changes channel faster.', 'inputmode="numeric"') + sSw('reconnect', 'Reconnect after signal loss') + sTxt('reconnectSec', 'Retry every (seconds)', '', 'inputmode="numeric"') + sSw('resumeLast', 'Remember the last channel'),
+  osd: () => `<div class="ib-sample">${ic('info')}<span>${t('The info bar appears over the picture when you change channel. Press I to show or hide it.')}</span></div>`
+    + sSw('osdZap', 'Show on channel change') + sSel('osdSec', 'Show for', [['3', '3 seconds'], ['5', '5 seconds'], ['8', '8 seconds'], ['12', '12 seconds'], ['0', 'Until I hide it']])
+    + sSel('osdSize', 'Size', [['compact', 'Compact'], ['normal', 'Normal'], ['large', 'Large']]) + sSw('osdMouse', 'Show when the mouse moves over the picture')
+    + `<div class="row"><button class="btn sm" data-act="osd-test" ${hasDevice() && S.channels.length ? '' : 'disabled'}>${ic('eye')}${t('Show it now')}</button></div>`,
   audio: () => sSel('audioDevice', 'Output device', ['System default']) + sSel('audioLang', 'Preferred audio language', ['Arabic', 'English', 'French']) + sSel('downmix', 'Channels', ['Stereo', '5.1']) + sSw('passthrough', 'Pass AC3 and E-AC3 to the receiver', 'For HDMI or optical amplifiers.') + sSw('normalize', 'Even out volume between channels'),
   video: () => sSel('deinterlace', 'Deinterlacing', ['Auto', 'Off', 'Bob', 'Yadif']) + sSel('aspect', 'Default aspect ratio', ['Fill', '16:9', '4:3', '21:9']) + sSel('subLang', 'Preferred subtitles', ['Off', 'Arabic', 'English', 'French']) + sTxt('subSize', 'Subtitle size (%)', '', 'inputmode="numeric"'),
   cam: () => sSw('camAuto', 'Connect enabled servers at startup') + sSw('camEncrypt', 'Encrypt saved passwords', 'Uses your Windows account.') + `<div class="row"><button class="btn sm" data-act="go" data-v="cam">${t('Open CAM Manager')}</button></div>`,
   biss: () => sSw('bissEncrypt', 'Encrypt saved keys', 'Uses your Windows account.') + `<div class="row"><button class="btn sm" data-act="go" data-v="biss">${t('Open BISS Manager')}</button></div>`,
   recording: () => (NATIVE ? sRow('Recording folder', S.settings.recFolder, `<button class="btn sm" data-act="pick-folder" data-v="recFolder">${ic('folder')}${t('Choose')}</button>`, true) : sTxt('recFolder', 'Recording folder', 'The desktop app opens a folder picker here.', 'dir="ltr"')) + sSel('recFormat', 'File format', ['TS', 'MKV']) + sTxt('recPad', 'Start early (minutes)', '', 'inputmode="numeric"') + sTxt('recPost', 'End late (minutes)', '', 'inputmode="numeric"') + sSw('recEpgName', 'Name files from the program guide'),
-  epg: () => sSel('epgSource', 'Listings source', ['Broadcast (EIT)', 'XMLTV file', 'XMLTV address']) + sTxt('epgUrl', 'XMLTV address', 'Use a source you are allowed to use.', 'dir="ltr" placeholder="https://"') + sTxt('epgDays', 'Days to keep', '', 'inputmode="numeric"') + sSel('epgUpdate', 'Update listings', ['While tuned', 'On a schedule', 'Manually']),
-  picons: () => sTxt('piconFolder', 'Logo folder', '', 'dir="ltr"') + sSel('piconFormat', 'Formats', ['PNG and SVG', 'PNG only', 'SVG only']) + `<div class="row"><button class="btn sm" data-act="go" data-v="picons">${t('Open Picon Manager')}</button></div>`,
+  epg: () => sSel('epgSource', 'Listings source', ['Broadcast (EIT)', 'XMLTV file', 'XMLTV address'], 'Broadcast listings are read from the tuned transponder. Many satellites also carry the guide for other transponders.')
+    + sSel('epgLang', 'Preferred listing language', [['ara,eng,fre,fra', 'Arabic'], ['eng,ara,fre,fra', 'English'], ['fre,fra,ara,eng', 'French']])
+    + sTxt('epgUrl', 'XMLTV address', 'Use a source you are allowed to use. Gzip files work too.', 'dir="ltr" placeholder="https://"') + sTxt('epgDays', 'Days to keep', '', 'inputmode="numeric"') + sSel('epgUpdate', 'Update listings', ['While tuned', 'On a schedule', 'Manually'])
+    + `<div class="row"><button class="btn sm" data-act="epg-xmltv-url">${ic('download')}${t('Load from address')}</button><button class="btn sm" data-act="epg-xmltv-file">${ic('upload')}${t('Load XMLTV file')}</button><button class="btn sm danger" data-act="epg-clear">${ic('trash')}${t('Clear listings')}</button></div>`,
+  picons: () => `<div class="set-h">${t('Download logos from the internet')}</div>`
+    + sSel('piconSource', 'Logo source', [['picons', 'picons project (GitHub)'], ['custom', 'My own server']], 'NOVA matches each channel by its service reference, then by its name.')
+    + (S.settings.piconSource === 'custom' ? sTxt('piconCustom', 'Address pattern', 'Use {srp} for the Enigma2 picon name (1_0_19_...), {snp} for the simplified name, {name} for the channel name.', 'dir="ltr" placeholder="https://example.com/picon/{srp}.png"')
+      : sTxt('piconBase', 'Project address', 'Change only if you use a copy of the picons project.', 'dir="ltr"') + sSel('piconStyle', 'Logo style', [['default', 'Default'], ['light', 'Light (for dark backgrounds)'], ['dark', 'Dark (for light backgrounds)']]))
+    + sSw('piconAuto', 'Download logos for new channels after a scan')
+    + `<div class="row"><button class="btn sm primary" data-act="pic-online" ${chans().length ? '' : 'disabled'}>${ic('download')}${t('Download missing logos')}</button><button class="btn sm" data-act="pic-index">${ic('refresh')}${t('Refresh logo index')}</button><button class="btn sm" data-act="pic-site">${ic('globe')}${t('Open the picons website')}</button></div>`
+    + `<div class="set-h">${t('Logo files')}</div>`
+    + (NATIVE ? sRow('Logo folder', 'Downloaded logos are kept here.', `<button class="btn sm" data-act="pic-folder">${ic('folder')}${t('Open folder')}</button>`, true) : sTxt('piconFolder', 'Logo folder', '', 'dir="ltr"'))
+    + `<div class="row"><button class="btn sm" data-act="go" data-v="picons">${t('Open Picon Manager')}</button></div>`,
   themes: () => `<p class="sub">${t('Themes live in their own screen so you can preview them across the app.')}</p><div class="row"><button class="btn sm" data-act="go" data-v="skins">${t('Open Skins & Themes')}</button></div>`,
   storage: () => sTxt('dbPath', 'Database file', 'Channels, satellites and settings.', 'dir="ltr"') + sTxt('logDays', 'Keep logs for (days)', '', 'inputmode="numeric"') + sSel('logLevel', 'Log detail', ['Errors only', 'Warnings', 'Information', 'Debug']),
   backup: () => `<p class="sub">${t('Create and restore backups from the Backup & Restore screen.')}</p><div class="row"><button class="btn sm" data-act="go" data-v="backup">${t('Open Backup & Restore')}</button></div>`,
@@ -2435,7 +2584,17 @@ SCREENS.preferences = () => `<div class="page">${pageHead('gear', 'Settings', 'C
   <div class="panes" style="grid-template-columns:232px minmax(0,1fr)"><section class="card pane"><nav class="set-nav scroll" aria-label="${t('Settings')}">${CATS.map(([k, i, l]) => `<button data-act="set-cat" data-v="${k}" aria-current="${setCat === k}">${ic(i)}<span>${t(l)}</span></button>`).join('')}</nav></section>
     <section class="card pane scroll"><div class="card-head"><h2>${t(CATS.find(c => c[0] === setCat)[2])}</h2></div>${CAT_BODY[setCat]()}</section></div></div>`;
 A['set-cat'] = el => { setCat = el.dataset.v; refresh(); };
-CHG.set = el => { const k = el.dataset.k; S.settings[k] = el.type === 'checkbox' ? el.checked : el.value; if (k === 'aspect') S.player.aspect = el.value; save(); };
+CHG.set = el => {
+  const k = el.dataset.k; S.settings[k] = el.type === 'checkbox' ? el.checked : el.value;
+  if (k === 'aspect') S.player.aspect = el.value;
+  save();
+  if (k === 'piconSource' || k === 'epgSource') refresh();
+  if (k === 'epgSource' || k === 'epgLang') settingsChanged?.(k);
+  if (k.startsWith('osd') && typeof ibOn === 'function' && ibOn()) ibRender();
+};
+/* Hook for the Windows app: some settings go to the engine at once. */
+let settingsChanged = null;
+A['osd-test'] = () => { go('live'); setTimeout(() => ibShow(), 60); };
 CHG.lang = el => { S.lang = el.value; save(); renderAll(); };
 A.motor = el => toast(`${t(el.dataset.v)}: ${t('simulated, no motor is connected')}`, 'warn');
 A.detect2 = async () => { toast(t('No tuner found. This preview cannot reach hardware.'), 'warn'); };
@@ -2494,6 +2653,368 @@ A['bk-restore'] = async () => {
 };
 A['bk-reset'] = () => confirmBox({ title: t('Reset all preview data?'), msg: t('Everything you changed in this preview returns to the starting sample data.'), yes: t('Reset'), onYes: () => { const mode = S.mode; S = seedState(); S.mode = mode; S.view = 'backup'; preview = null; liveBuilt = false; $('#view-live').innerHTML = ''; save(); renderAll(); toast(t('Preview data reset'), 'good'); } });
 
+/* Program guide data. In the Windows app it comes from the broadcast (EIT, read by the engine while a
+   channel is tuned) or from an XMLTV file or address. The browser preview keeps its sample listings
+   until real listings are loaded. Events are kept per service (transport stream and service id) or,
+   for XMLTV, per channel. */
+const EPGD = { map: new Map(), ver: 0, dirty: false };
+const EPG_LIST = new Map();
+const epgKey = (tsid, sid) => `${tsid}:${sid}`;
+
+function epgIngest(key, events) {
+  let m = EPGD.map.get(key);
+  if (!m) EPGD.map.set(key, m = new Map());
+  for (const e of events) {
+    if (!(e.end > e.start) || !e.title) continue;
+    for (const [s, o] of m) if (s !== e.start && o.start < e.end && e.start < o.end) m.delete(s);   /* a changed schedule replaces what overlaps */
+    m.set(e.start, e);
+  }
+  EPGD.ver++; EPGD.dirty = true;
+}
+function liveEpg(ch) {
+  const c = EPG_LIST.get(ch.id);
+  if (c && c.v === EPGD.ver) return c.list;
+  const out = [], seen = new Set();
+  for (const k of ['ch:' + ch.id, ch.tsid != null && ch.sid != null ? epgKey(ch.tsid, ch.sid) : '']) {
+    const m = k && EPGD.map.get(k);
+    if (!m) continue;
+    for (const e of m.values()) {
+      if (seen.has(e.start)) continue;
+      seen.add(e.start);
+      out.push({ id: `${ch.id}-${e.start}`, ch: ch.id, title: e.title, start: e.start, end: e.end, desc: e.desc || '', genre: e.genre || 0 });
+    }
+  }
+  out.sort((a, b) => a.start - b.start);
+  EPG_LIST.set(ch.id, { v: EPGD.ver, list: out });
+  return out;
+}
+const sampleEpgFor = epgFor;
+epgFor = ch => {
+  if (!ch) return [];
+  const list = liveEpg(ch);
+  return list.length || NATIVE ? list : sampleEpgFor(ch);
+};
+const hasLiveEpg = () => EPGD.map.size > 0;
+
+function epgPrune() {
+  const lo = Date.now() - 6 * 36e5, hi = Date.now() + (Number(S.settings.epgDays) || 7) * 864e5;
+  for (const m of EPGD.map.values()) for (const [s, e] of m) if (e.end < lo || e.start > hi) m.delete(s);
+  for (const [k, m] of EPGD.map) if (!m.size) EPGD.map.delete(k);
+  EPGD.ver++;
+}
+function epgClear() { EPGD.map.clear(); EPGD.ver++; EPGD.dirty = true; epgPersist(true); }
+
+/* Engine events: { onid, tsid, sid, id, start (Unix seconds), duration, title, text, genre } */
+function epgFromEngine(events) {
+  const by = new Map();
+  for (const e of events) {
+    const k = epgKey(e.tsid, e.sid);
+    if (!by.has(k)) by.set(k, []);
+    by.get(k).push({ start: e.start * 1000, end: (e.start + e.duration) * 1000, title: e.title, desc: e.text || '', genre: e.genre || 0 });
+  }
+  for (const [k, list] of by) epgIngest(k, list);
+  epgRefreshViews();
+}
+let epgViewTimer = 0;
+function epgRefreshViews() {
+  clearTimeout(epgViewTimer);
+  epgViewTimer = setTimeout(() => {
+    if (S.view === 'live') { renderNow(); renderCards(); } else if (S.view === 'epg') refresh();
+  }, 400);
+}
+
+/* Saving: the Windows app keeps the guide in its database, the preview in this browser. */
+const EPG_STORE = 'nova-dvb-studio.epg';
+function epgPack() {
+  epgPrune();
+  return { v: 1, at: Date.now(), items: [...EPGD.map].map(([k, m]) => [k, [...m.values()].map(e => [e.start, e.end, e.title, (e.desc || '').slice(0, 400), e.genre || 0])]) };
+}
+function epgUnpack(d) {
+  if (!d || d.v !== 1 || !Array.isArray(d.items)) return;
+  for (const [k, list] of d.items) epgIngest(k, list.map(([start, end, title, desc, genre]) => ({ start, end, title, desc, genre })));
+  epgPrune();
+  EPGD.dirty = false;
+}
+function epgPersist(force) {
+  if (!EPGD.dirty && !force) return;
+  EPGD.dirty = false;
+  if (NATIVE) { window.chrome.webview.postMessage({ cmd: 'epgSave', data: epgPack() }); return; }
+  try { localStorage.setItem(EPG_STORE, JSON.stringify(epgPack())); } catch (e) { /* storage full or blocked: the guide stays in memory */ }
+}
+setInterval(() => epgPersist(false), 60000);
+if (!NATIVE) { try { epgUnpack(JSON.parse(localStorage.getItem(EPG_STORE) || 'null')); } catch (e) { /* no saved guide */ } }
+
+/* ---------- XMLTV ---------- */
+const xmltvTime = s => {
+  const m = /^(\d{4})(\d\d)(\d\d)(\d\d)(\d\d)(\d\d)?\s*([+-]\d{4})?/.exec(s || '');
+  if (!m) return NaN;
+  const off = m[7] ? (m[7][0] === '-' ? -1 : 1) * (Number(m[7].slice(1, 3)) * 60 + Number(m[7].slice(3))) : 0;
+  return Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +(m[6] || 0)) - off * 6e4;
+};
+const nameKey = s => String(s || '').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^\p{L}\p{N}]/gu, '');
+const nameKeyLoose = s => nameKey(String(s || '').replace(/\b(f?hd|uhd|4k|sd|tv)\b/gi, ''));
+/* Matches XMLTV channels to yours by name, with and without HD or TV in it. */
+function applyXmltv(text) {
+  const doc = new DOMParser().parseFromString(text, 'application/xml');
+  if (doc.querySelector('parsererror') || !doc.querySelector('tv')) throw new Error('not xmltv');
+  const ours = new Map();
+  S.channels.forEach(c => { for (const k of [nameKey(c.name), nameKeyLoose(c.name)]) if (k && !ours.has(k)) ours.set(k, c); });
+  const map = new Map();
+  $$('channel', doc).forEach(x => {
+    const id = x.getAttribute('id');
+    for (const n of [...$$('display-name', x).map(d => d.textContent), id]) {
+      const c = ours.get(nameKey(n)) || ours.get(nameKeyLoose(n));
+      if (c) { map.set(id, c); break; }
+    }
+  });
+  const by = new Map();
+  $$('programme', doc).forEach(p => {
+    const c = map.get(p.getAttribute('channel'));
+    if (!c) return;
+    const start = xmltvTime(p.getAttribute('start')), end = xmltvTime(p.getAttribute('stop'));
+    if (!(end > start)) return;
+    if (!by.has(c.id)) by.set(c.id, []);
+    by.get(c.id).push({ start, end, title: p.querySelector('title')?.textContent?.trim() || '', desc: (p.querySelector('desc')?.textContent || '').trim().slice(0, 600), genre: 0 });
+  });
+  let progs = 0;
+  for (const [id, list] of by) { epgIngest('ch:' + id, list); progs += list.length; }
+  epgPrune(); epgPersist(true); epgRefreshViews();
+  return { chans: by.size, progs };
+}
+/* Fetches text through the Windows app (no browser limits on other sites) or, in the preview, directly. */
+const HostReq = new Map();
+/* A request to the Windows app, answered by an event carrying the same id. It gives up after a while,
+   so a lost answer never leaves the interface waiting. */
+function hostAsk(msg, ms = 90000) {
+  return new Promise(res => {
+    const id = uid('rq');
+    const timer = setTimeout(() => { if (HostReq.delete(id)) res({ ok: false, timeout: true }); }, ms);
+    HostReq.set(id, m => { clearTimeout(timer); res(m); });
+    window.chrome.webview.postMessage({ ...msg, id });
+  });
+}
+function getText(url, opts = {}) {
+  if (NATIVE) {
+    return hostAsk({ cmd: 'fetchText', url, ...opts }, 120000);
+  }
+  return fetch(url).then(async r => ({ ok: r.ok, text: r.ok ? await r.text() : '' })).catch(() => ({ ok: false, text: '' }));
+}
+async function readMaybeGz(f) {
+  if (!/\.gz$/i.test(f.name) || !window.DecompressionStream) return readText(f);
+  return new Response(f.stream().pipeThrough(new DecompressionStream('gzip'))).text();
+}
+async function loadXmltv(fromFile) {
+  let text = '';
+  if (fromFile) {
+    const [f] = await pickFiles('.xml,.gz,.xmltv,application/xml,text/xml'); if (!f) return;
+    try { text = await readMaybeGz(f); } catch (e) { toast(t('That file could not be read.'), 'bad'); return; }
+  } else {
+    const url = String(S.settings.epgUrl || '').trim();
+    if (!/^https?:\/\//i.test(url)) { toast(t('Enter an XMLTV address that starts with http:// or https://'), 'warn'); return; }
+    toast(t('Downloading listings'));
+    const r = await getText(url);
+    if (!r.ok) { toast(t('Could not download the listings. Check the address and the internet connection.'), 'bad'); return; }
+    text = r.text;
+  }
+  try {
+    const r = applyXmltv(text);
+    toast(`${r.progs} ${t('programs for')} ${r.chans} ${t('channels')}`, r.progs ? 'good' : 'warn');
+  } catch (e) { toast(t('That is not an XMLTV guide.'), 'bad'); }
+}
+A['epg-xmltv-file'] = () => loadXmltv(true);
+A['epg-xmltv-url'] = () => loadXmltv(false);
+A['epg-clear'] = () => confirmBox({ title: t('Clear all listings?'), msg: t('Listings from the broadcast come back while a channel is tuned.'), yes: t('Clear'), onYes: () => { epgClear(); refresh(); toast(t('Listings cleared'), 'good'); } });
+
+/* XMLTV from an address refreshes itself every six hours when the setting asks for it. */
+setInterval(() => { if (S.settings.epgSource === 'XMLTV address' && S.settings.epgUpdate === 'On a schedule' && S.settings.epgUrl) loadXmltv(false); }, 6 * 36e5);
+
+/* Channel logos from the internet. The default source is the picons project (github.com/picons/picons),
+   which publishes logos with two indexes: srp.index maps a service reference (SID_TSID_ONID_NAMESPACE)
+   to a logo, and utf8snp.index maps a lower-case channel name to a logo. NOVA tries the service
+   reference first, then the name. A custom server works with an address pattern such as
+   https://example.com/picon/{srp}.png, where {srp} is the Enigma2 picon file name. */
+const PIC = { srp: null, snp: null, norm: null, logos: null, loading: null, busy: false, done: 0, total: 0, hit: 0 };
+const PICON_SITE = 'https://github.com/picons/picons';
+const piconBase = () => String(S.settings.piconBase || seedState().settings.piconBase).replace(/\/?$/, '/');
+const hex = n => Number(n).toString(16).toUpperCase();
+
+async function piconIndex(force = false) {
+  if (PIC.srp && !force) return PIC;
+  if (PIC.loading) return PIC.loading;
+  PIC.loading = (async () => {
+    const opt = name => ({ cache: name, preferCache: !force });
+    const [a, b] = await Promise.all([getText(piconBase() + 'srp.index', opt('srp.index')), getText(piconBase() + 'utf8snp.index', opt('utf8snp.index'))]);
+    if (!a.ok && !b.ok) throw new Error('index');
+    const srp = new Map(), snp = new Map(), norm = new Map(), logos = new Map();
+    const lines = (text, fn) => { for (const line of (text || '').split(/\r?\n/)) { const i = line.indexOf('='); if (i > 0) fn(line.slice(0, i).trim(), line.slice(i + 1).trim()); } };
+    lines(a.text, (k, v) => { srp.set(k.toUpperCase(), v); logos.set(nameKey(v), v); });
+    lines(b.text, (k, v) => { snp.set(k.toLowerCase(), v); const n = nameKey(k); if (n && !norm.has(n)) norm.set(n, v); logos.set(nameKey(v), v); });
+    Object.assign(PIC, { srp, snp, norm, logos });
+    return PIC;
+  })();
+  try { return await PIC.loading; } finally { PIC.loading = null; }
+}
+
+/* Service reference as the picons project writes it: SID_TSID_ONID_NAMESPACE in hex. The namespace of a
+   satellite service is its orbital position in tenths of a degree (west counted from 360) shifted 16 bits. */
+function srpKey(ch) {
+  const s = satById(ch.sat);
+  if (!s || ch.sid == null || ch.tsid == null || ch.onid == null) return null;
+  const lon = Math.round(lonOf(s) * 10);
+  return `${hex(ch.sid)}_${hex(ch.tsid)}_${hex(ch.onid)}_${hex((lon < 0 ? 3600 + lon : lon) * 65536)}`;
+}
+const e2Picon = ch => { const k = srpKey(ch); return k ? `1_0_${hex(ch.svcType || (ch.type === 'radio' ? 2 : 1))}_${k}_0_0_0` : null; };
+
+function matchLogo(ch) {
+  const k = srpKey(ch);
+  if (k && PIC.srp.has(k)) return PIC.srp.get(k);
+  const lower = ch.name.toLowerCase().trim();
+  if (PIC.snp.has(lower)) return PIC.snp.get(lower);
+  for (const n of [nameKey(ch.name), nameKeyLoose(ch.name)]) {
+    if (!n) continue;
+    if (PIC.norm.has(n)) return PIC.norm.get(n);
+    if (PIC.logos.has(n)) return PIC.logos.get(n);
+  }
+  return null;
+}
+function logoUrls(logo) {
+  const order = [...new Set([S.settings.piconStyle || 'default', 'default', 'light', 'dark'])];
+  return order.flatMap(v => [`${piconBase()}logos/${logo}.${v}.svg`, `${piconBase()}logos/${logo}.${v}.png`]);
+}
+function customUrls(ch) {
+  const pat = String(S.settings.piconCustom || '').trim();
+  if (!/^https?:\/\//i.test(pat)) return [];
+  const srp = e2Picon(ch);
+  if (pat.includes('{srp}') && !srp) return [];
+  return [pat.replace('{srp}', srp || '').replace('{snp}', nameKey(ch.name)).replace('{name}', encodeURIComponent(ch.name))];
+}
+
+/* Logos become PNG files: the info bar window in the Windows app cannot draw SVG. */
+function drawContain(img, W = 400, H = 240) {
+  const c = document.createElement('canvas'); c.width = W; c.height = H;
+  const g = c.getContext('2d'), iw = img.naturalWidth || W, ih = img.naturalHeight || H, k = Math.min(W / iw, H / ih);
+  g.drawImage(img, (W - iw * k) / 2, (H - ih * k) / 2, iw * k, ih * k);
+  return c.toDataURL('image/png');
+}
+async function svgToPng(svg) {
+  let src = svg;
+  const vb = /viewBox\s*=\s*["']\s*[-\d.]+[\s,]+[-\d.]+[\s,]+([\d.]+)[\s,]+([\d.]+)/i.exec(svg);
+  if (vb && !/<svg[^>]*\swidth\s*=/i.test(svg)) src = svg.replace(/<svg\b/i, `<svg width="${vb[1]}" height="${vb[2]}"`);
+  const url = URL.createObjectURL(new Blob([src], { type: 'image/svg+xml' }));
+  try { const img = new Image(); img.src = url; await img.decode(); return drawContain(img); } finally { URL.revokeObjectURL(url); }
+}
+async function blobToPng(blob) {
+  const url = URL.createObjectURL(blob);
+  try { const img = new Image(); img.src = url; await img.decode(); return drawContain(img); } finally { URL.revokeObjectURL(url); }
+}
+const hostCall = msg => hostAsk(msg);
+
+/* Returns the picon address to store for the channel, or null. */
+async function fetchLogo(urls, file) {
+  if (!urls.length) return null;
+  if (NATIVE) {
+    const r = await hostCall({ cmd: 'piconFetch', name: file, urls });
+    if (!r.ok) return null;
+    if (r.file) return `https://picons.nova.app/${r.file}?v=${Date.now()}`;
+    const png = await svgToPng(r.svg).catch(() => null);
+    if (!png) return null;
+    const w = await hostCall({ cmd: 'piconWrite', name: file, b64: png.slice(png.indexOf(',') + 1) });
+    return w.file ? `https://picons.nova.app/${w.file}?v=${Date.now()}` : null;
+  }
+  for (const url of urls) {
+    try {
+      const r = await fetch(url);
+      if (!r.ok) continue;
+      const blob = await r.blob();
+      return /\.svg$/i.test(url) || blob.type.includes('svg') ? await svgToPng(await blob.text()) : await blobToPng(blob);
+    } catch (e) { /* try the next address */ }
+  }
+  return null;
+}
+async function logoFor(ch, logo) {
+  if (S.settings.piconSource === 'custom') return fetchLogo(customUrls(ch), e2Picon(ch) || ch.id);
+  if (!logo) return null;
+  return fetchLogo(logoUrls(logo), `${logo}-${S.settings.piconStyle || 'default'}`);
+}
+
+async function piconDownload(list, quiet = false) {
+  if (PIC.busy) { toast(t('Logos are already downloading.'), 'warn'); return; }
+  if (!list.length) { if (!quiet) toast(t('Every channel has a logo.'), 'good'); return; }
+  if (S.settings.piconSource !== 'custom') {
+    try { await piconIndex(); } catch (e) { toast(t('Could not load the logo index. Check the internet connection.'), 'bad'); return; }
+  }
+  Object.assign(PIC, { busy: true, done: 0, total: list.length, hit: 0 });
+  if (S.view === 'picons') refresh();
+  let i = 0;
+  const worker = async () => {
+    while (i < list.length) {
+      const ch = list[i++];
+      const logo = S.settings.piconSource === 'custom' ? null : matchLogo(ch);
+      const src = await logoFor(ch, logo).catch(() => null);
+      if (src) { S.picons[ch.id] = src; PIC.hit++; }
+      PIC.done++;
+      if (S.view === 'picons' && PIC.done % 4 === 0) refresh();
+    }
+  };
+  await Promise.all([worker(), worker(), worker()]);
+  PIC.busy = false;
+  save();
+  if (S.view === 'live') renderAll(); else if (S.view === 'picons') refresh();
+  toast(`${PIC.hit} ${t('of')} ${PIC.total} ${t('logos downloaded')}`, PIC.hit ? 'good' : 'warn');
+}
+/* After a scan, new channels get logos without asking, when the setting allows it. */
+function piconAfterScan(ids) {
+  if (!S.settings.piconAuto) return;
+  const list = ids.map(chById).filter(c => c && !S.picons[c.id]);
+  if (list.length) piconDownload(list, true);
+}
+
+A['pic-online'] = () => {
+  const all = chans(), missing = all.filter(c => !S.picons[c.id] || S.picons[c.id] === 'auto');
+  const id = uid('po');
+  A[id] = () => { const v = formVals(modals[modals.length - 1]); closeModal(); piconDownload(v.scope === 'all' ? all : missing); };
+  openModal({ title: t('Download logos'), width: 470,
+    body: `<p class="sub">${t(S.settings.piconSource === 'custom' ? 'Logos come from your own server, using the address pattern in Settings.' : 'Logos come from the picons project, a free collection made by its contributors.')}</p>
+      ${selectF('Channels', 'scope', [['missing', `${t('Without a logo')} (${missing.length})`], ['all', `${t('All channels, replace existing')} (${all.length})`]], 'missing')}`,
+    foot: `<button class="btn" data-act="modal-close">${t('Cancel')}</button><button class="btn primary" data-act="${id}">${ic('download')}${t('Download')}</button>` });
+};
+A['pic-index'] = async () => {
+  toast(t('Downloading the logo index'));
+  try { const p = await piconIndex(true); toast(`${t('Logo index ready')}: ${p.logos.size}`, 'good'); }
+  catch (e) { toast(t('Could not load the logo index. Check the internet connection.'), 'bad'); }
+};
+A['pic-site'] = () => { if (NATIVE) window.chrome.webview.postMessage({ cmd: 'openUrl', url: PICON_SITE }); else window.open(PICON_SITE, '_blank', 'noopener'); };
+A['pic-folder'] = () => window.chrome?.webview?.postMessage({ cmd: 'openFolder', key: 'picons' });
+
+/* Search the index by hand for one channel */
+const PF = { ch: null, q: '' };
+function pfResults() {
+  if (!PIC.logos) return `<div class="hint">${t('Loading the logo index')}</div>`;
+  const q = nameKey(PF.q);
+  if (q.length < 2) return `<div class="hint">${t('Type at least two letters.')}</div>`;
+  const hits = [...new Set([...PIC.logos.values()])].filter(l => nameKey(l).includes(q)).slice(0, 36);
+  return hits.length ? `<div class="pf-grid">${hits.map(l => `<button class="pf-cell" data-act="pic-pick" data-v="${esc(l)}" data-tip="${esc(l)}"><img loading="lazy" src="${esc(`${piconBase()}logos/${l}.default.svg`)}" alt="" onerror="this.onerror=null;this.src='${esc(`${piconBase()}logos/${l}.default.png`)}'"><span>${esc(l)}</span></button>`).join('')}</div>`
+    : `<div class="hint">${t('No logos match')}</div>`;
+}
+A['pic-find'] = async el => {
+  PF.ch = chById(el.dataset.v); PF.q = PF.ch.name.replace(/\b(f?hd|uhd|4k)\b/gi, '').trim();
+  openModal({ title: `${t('Find a logo')}: ${PF.ch.name}`, width: 640,
+    body: `<label class="search">${ic('search')}<input id="pf-q" type="search" value="${esc(PF.q)}" data-chg="pf-q" aria-label="${t('Search logos')}" placeholder="${t('Search logos')}"></label><div id="pf-res" class="pf-res">${pfResults()}</div>`,
+    foot: `<button class="btn" data-act="modal-close">${t('Close')}</button>` });
+  if (!PIC.logos) {
+    try { await piconIndex(); } catch (e) { toast(t('Could not load the logo index. Check the internet connection.'), 'bad'); }
+    const r = $('#pf-res'); if (r) r.innerHTML = pfResults();
+  }
+};
+CHG['pf-q'] = el => { PF.q = el.value; const r = $('#pf-res'); if (r) r.innerHTML = pfResults(); };
+A['pic-pick'] = async el => {
+  const ch = PF.ch, logo = el.dataset.v;
+  el.disabled = true;
+  const src = await fetchLogo(logoUrls(logo), `${logo}-${S.settings.piconStyle || 'default'}`).catch(() => null);
+  if (!src) { el.disabled = false; toast(t('That logo could not be downloaded.'), 'bad'); return; }
+  S.picons[ch.id] = src; save(); closeModal(); refresh(); toast(t('Logo updated'), 'good');
+};
+
 /* Windows app mode. Runs only inside the NOVA window, where the page talks to the real engine.
    In a browser this file does nothing and the demo stays as it was reviewed. */
 const Engine = { tuners: [], opened: false, name: '', caps: null, signal: null, stats: {}, lastTune: null, lockWait: 0, retryAt: 0, recording: false, recStart: 0 };
@@ -2525,8 +3046,9 @@ if (NATIVE) (() => {
     if (!Engine.opened) { toast(t('No satellite tuner found'), 'warn'); return; }
     const sat = satById(ch.sat), tp = tpOf(ch);
     if (!sat || !tp) { toast(t('This channel has no transponder. Scan it again.'), 'bad'); return; }
-    S.player.ch = id; S.player.audio = 0; S.player.sub = -1; S.player.playing = true; save();
     const req = tuneRequest(sat, tp);
+    if (Engine.recording && !sameTp(req, Engine.lastTune)) { toast(t('A recording is running on another transponder. Stop it first, or pick a channel on the same transponder.'), 'warn'); return; }
+    S.player.ch = id; S.player.audio = 0; S.player.sub = -1; S.player.playing = true; save();
     if (!sameTp(req, Engine.lastTune)) { engine('tune', req); Engine.lastTune = req; Engine.lockWait = Date.now() + 8000; }
     sendAudio();
     post({ cmd: 'aspect', value: S.player.aspect });
@@ -2593,7 +3115,7 @@ if (NATIVE) (() => {
   function scanNext() {
     if (scan.status !== 'running') return;
     if (scan.i >= scan.tps.length) { scan.status = 'done'; scan.pct = 100; if (S.view === 'scan') refresh(); toast(`${t('Scan finished')}: ${scan.found.length}`, 'good'); return; }
-    engine('scan', { id: scan.i, timeoutMs: 12000, tune: tuneRequest(satById(scan.sat), scan.tps[scan.i]) });
+    engine('scan', { id: scan.i, timeoutMs: 12000, nit: !!scan.net, tune: tuneRequest(satById(scan.sat), scan.tps[scan.i]) });
   }
   function onScanResult(m) {
     const p = scan.tps[scan.i];
@@ -2604,10 +3126,23 @@ if (NATIVE) (() => {
       const radio = sv.serviceType === 2 || sv.serviceType === 0x0A || (!video && audio.length > 0);
       if (!video && !audio.length) return;
       if ((radio && !scan.radio) || (!radio && !scan.tv) || (scan.fta && !sv.freeToAir)) return;
-      scan.found.push({ name: sv.name || `Service ${sv.sid}`, provider: sv.provider, type: radio ? 'radio' : 'tv', fta: sv.freeToAir, tp: p, sid: sv.sid, tsid: sv.tsid, svcType: sv.serviceType, video, audio, subs: sv.streams.filter(x => x.kind === 'subtitle') });
+      scan.found.push({ name: sv.name || `Service ${sv.sid}`, provider: sv.provider, type: radio ? 'radio' : 'tv', fta: sv.freeToAir, tp: p, sid: sv.sid, tsid: sv.tsid, onid: sv.onid || m.onid || 0, svcType: sv.serviceType, video, audio, subs: sv.streams.filter(x => x.kind === 'subtitle'), txt: sv.streams.some(x => x.kind === 'teletext') });
       added++;
     });
     scan.log.unshift(`${p.freq} ${p.pol} ${p.sr}  ${m.locked ? '<b>lock</b>' : 'no lock'}  +${added}`);
+    /* Network search: the NIT lists the other transponders of the network on this satellite. */
+    if (scan.net && scan.mode !== 'manual' && Array.isArray(m.transponders)) {
+      const lon = lonOf(satById(scan.sat));
+      let more = 0;
+      m.transponders.forEach(x => {
+        if (x.orbital && Math.abs(x.orbital / 10 - lon) > 0.6) return;
+        if (x.freqMHz < 10700 || x.freqMHz > 12750 || !x.symbolRate) return;
+        if (scan.tps.some(q => Math.abs(q.freq - x.freqMHz) <= 3 && q.pol === x.pol)) return;
+        scan.tps.push({ freq: x.freqMHz, pol: x.pol, sr: x.symbolRate, fec: x.fec, mod: x.mod, std: x.std, ro: x.rollOff, pilot: 'Auto' });
+        more++;
+      });
+      if (more) scan.log.unshift(`NIT: +${more} ${t('transponders')}`);
+    }
     scan.i++; scan.pct = scan.i / scan.tps.length * 100;
     if (S.view === 'scan') refresh();
     scanNext();
@@ -2618,17 +3153,21 @@ if (NATIVE) (() => {
   A['scan-save'] = () => {
     const sat = satById(scan.sat);
     let added = 0;
+    const newIds = [];
     scan.found.forEach(f => {
-      if (S.channels.some(c => c.sat === sat.id && c.f === f.tp.freq && c.p === f.tp.pol && c.sid === f.sid)) return;
+      const old = S.channels.find(c => c.sat === sat.id && c.f === f.tp.freq && c.p === f.tp.pol && c.sid === f.sid);
+      if (old) { Object.assign(old, { tsid: f.tsid, onid: f.onid, svcType: f.svcType, txt: f.txt }); return; }
       if (!sat.tps.some(p => p.freq === f.tp.freq && p.pol === f.tp.pol)) sat.tps.push({ id: uid('tp'), ...f.tp });
       const radio = f.type === 'radio', hd = SVC_HD.includes(f.svcType) || HD_NAME.test(f.name) || f.video?.codec === 'H.265';
       const words = f.name.replace(/[^\p{L}\p{N} ]/gu, '').trim().split(/\s+/);
       S.channels.push({ id: uid('ch'), lcn: S.channels.length + 1, name: f.name, provider: f.provider || '', code: words.slice(0, 2).map(w => w[0] || '').join('').toUpperCase() || 'TV', num: '', kind: radio ? 'radio' : 'news', q: radio ? 'R' : f.svcType === 0x1F || /\b(4K|UHD)\b/i.test(f.name) ? '4K' : hd ? 'HD' : 'SD', p1: '#3a4678', p2: '#1d2547', type: f.type, sat: sat.id, f: f.tp.freq, p: f.tp.pol, tp: 0,
         vcodec: f.video?.codec || '', acodec: f.audio[0]?.codec || '', res: '', kbps: 0, sid: f.sid, tsid: f.tsid, vpid: f.video?.pid || 0, apid: f.audio[0]?.pid || 0,
-        audio: f.audio.map(a => a.lang || a.codec), subs: f.subs.map(a => a.lang), fta: f.fta, fav: [], locked: false, hidden: false });
+        audio: f.audio.map(a => a.lang || a.codec), subs: f.subs.map(a => a.lang), fta: f.fta, fav: [], locked: false, hidden: false, onid: f.onid, svcType: f.svcType, txt: f.txt });
+      newIds.push(S.channels[S.channels.length - 1].id);
       added++;
     });
     scan.found = []; save(); refresh(); toast(`${added} ${t('channels saved to your list')}`, 'good');
+    piconAfterScan(newIds);
   };
 
   /* ---------- DiSEqC motor, DiSEqC 1.2 ---------- */
@@ -2651,26 +3190,71 @@ if (NATIVE) (() => {
   };
 
   /* ---------- Recording ---------- */
-  A['toggle-rec'] = () => {
-    if (S.mode !== 'live') { toast(t('Recording needs a tuner with a locked signal.'), 'warn'); return; }
-    if (!Engine.recording) { post({ cmd: 'recPath', folder: S.settings.recFolder, title: curCh().name }); return; }
-    engine('recStop');
-    const c = curCh(), mins = Math.max(1, Math.round((Date.now() - Engine.recStart) / 6e4));
-    S.recordings.unshift({ id: uid('r'), title: c.name, ch: c.id, at: Engine.recStart, mins, gb: +((Engine.signal?.bitrateKbps || 0) * mins * 60 / 8e6).toFixed(2), path: Engine.recPath });
-    Engine.recording = false; recording = null; save(); toast(t('Recording saved to Recordings'), 'good');
-    if (S.view === 'live') { renderPlayer(); renderCards(); }
+  const recTitle = () => {
+    const c = curCh(), n = S.settings.recEpgName ? nowNext(c)[0] : null;
+    return n ? `${c.name} - ${n.title}` : c.name;
   };
+  function startRec(title) { Engine.recTitle = title; post({ cmd: 'recPath', folder: S.settings.recFolder, title }); }
+  function stopRec() {
+    if (!Engine.recording) return;
+    engine('recStop');
+    const c = chById(Engine.recCh) || curCh(), mins = Math.max(1, Math.round((Date.now() - Engine.recStart) / 6e4));
+    S.recordings.unshift({ id: uid('r'), title: Engine.recTitle || c.name, ch: c.id, at: Engine.recStart, mins, gb: +((Engine.signal?.bitrateKbps || 0) * mins * 60 / 8e6).toFixed(2), path: Engine.recPath });
+    Engine.recording = false; recording = null; save(); toast(t('Recording saved to Recordings'), 'good');
+    if (S.view === 'live') { renderPlayer(); renderCards(); } else if (S.view === 'recordings') refresh();
+  }
+  A['toggle-rec'] = () => {
+    if (Engine.recording) { if (Sched.active) Sched.active.stopAt = 0; stopRec(); return; }
+    if (S.mode !== 'live') { toast(t('Recording needs a tuner with a locked signal.'), 'warn'); return; }
+    startRec(recTitle());
+  };
+
+  /* ---------- Scheduled recordings ----------
+     Checked every few seconds while NOVA is open. A due schedule tunes its channel, records from the
+     early margin to the late margin, then repeats daily or weekly, or is removed. */
+  const Sched = { active: null };
+  function finishTimer(k) {
+    if (k.repeat === 'Daily' || k.repeat === 'Weekly') {
+      const step = k.repeat === 'Daily' ? 864e5 : 7 * 864e5;
+      while (k.start + k.mins * 6e4 <= Date.now()) k.start += step;
+      delete k.pid;
+    } else S.timers = S.timers.filter(x => x !== k);
+    save();
+    if (S.view === 'recordings') refresh();
+  }
+  function schedTick() {
+    const now = Date.now(), early = (Number(S.settings.recPad) || 0) * 6e4, late = (Number(S.settings.recPost) || 0) * 6e4;
+    const a = Sched.active;
+    if (a) {
+      if (now >= a.stopAt) { if (Engine.recording) stopRec(); Sched.active = null; finishTimer(a.timer); }
+      return;
+    }
+    const due = S.timers.find(k => now >= k.start - early && now < k.start + k.mins * 6e4);
+    if (!due) return;
+    const ch = chById(due.ch);
+    if (!ch) { finishTimer(due); return; }
+    if (!Engine.opened) return;
+    if (Engine.recording && Engine.recCh !== ch.id) { toast(`${t('Scheduled recording skipped, the tuner is busy')}: ${due.title}`, 'warn'); finishTimer(due); return; }
+    Sched.active = { timer: due, stopAt: due.start + due.mins * 6e4 + late };
+    if (Engine.recording) return;                         /* already recording this channel by hand */
+    unlocked.add(ch.id);                                  /* a schedule set by the owner is not stopped by the PIN */
+    if (S.player.ch !== ch.id || !Engine.lastTune) tune(ch.id);
+    toast(`${t('Scheduled recording')}: ${due.title}`, 'good');
+    setTimeout(() => { if (Sched.active?.timer === due && !Engine.recording) startRec(`${ch.name} - ${due.title}`); }, 4000);
+  }
+  setInterval(schedTick, 5000);
+  Engine.schedTick = schedTick;      /* lets the tests run a check without waiting */
   A['rec-play'] = el => { const r = S.recordings.find(x => x.id === el.dataset.v); if (r?.path) { go('live'); post({ cmd: 'playFile', path: r.path }); S.player.playing = true; } };
 
   /* ---------- Window and files ---------- */
   A['win-min'] = () => post({ cmd: 'windowMin' });
   A['win-max'] = () => post({ cmd: 'windowMax' });
-  const reallyClose = () => { save(); post({ cmd: 'saveState', state: JSON.parse(JSON.stringify(S, secretFilter)) }); post({ cmd: 'windowClose' }); };
+  const reallyClose = () => { save(); epgPersist(true); post({ cmd: 'saveState', state: JSON.parse(JSON.stringify(S, secretFilter)) }); post({ cmd: 'windowClose' }); };
   A['win-close'] = () => {
-    if (S.settings.confirmExit) confirmBox({ title: t('Close NOVA DVB Studio?'), msg: Engine.recording ? t('A recording is running. Closing stops it.') : t('Playback stops and the tuner is released.'), yes: t('Close'), onYes: reallyClose });
+    if (S.settings.confirmExit) confirmBox({ title: t('Close NOVA DVB Studio?'), msg: Engine.recording ? t('A recording is running. Closing stops it.') : S.timers.length ? t('Scheduled recordings run only while NOVA is open.') : t('Playback stops and the tuner is released.'), yes: t('Close'), onYes: reallyClose });
     else reallyClose();
   };
-  A.about = () => openModal({ title: 'NOVA DVB Studio', width: 480, body: `<dl class="kv dl-plain"><dt>${t('Version')}</dt><dd class="ltr">0.1.0</dd><dt>${t('Tuner')}</dt><dd>${esc(Engine.name || t('No tuner'))}</dd><dt>${t('Extension')}</dt><dd>${esc(Engine.caps?.extension || '—')}</dd><dt>${t('Icons')}</dt><dd>Lucide (ISC)</dd><dt>${t('Video')}</dt><dd>LibVLC (LGPL)</dd></dl>`, foot: `<button class="btn" data-act="logs">${t('Open log folder')}</button><button class="btn primary" data-act="modal-close">${t('Close')}</button>` });
+  A.about = () => openModal({ title: 'NOVA DVB Studio', width: 480, body: `<dl class="kv dl-plain"><dt>${t('Version')}</dt><dd class="ltr">0.2.0</dd><dt>${t('Tuner')}</dt><dd>${esc(Engine.name || t('No tuner'))}</dd><dt>${t('Extension')}</dt><dd>${esc(Engine.caps?.extension || '—')}</dd><dt>${t('Icons')}</dt><dd>Lucide (ISC)</dd><dt>${t('Video')}</dt><dd>LibVLC (LGPL)</dd><dt>${t('Logos')}</dt><dd>picons project (github.com/picons/picons)</dd></dl>`, foot: `<button class="btn" data-act="logs">${t('Open log folder')}</button><button class="btn primary" data-act="modal-close">${t('Close')}</button>` });
   A.logs = () => post({ cmd: 'openLogs' });
   saveFile = async (filename, text) => post({ cmd: 'saveFile', name: filename, text });
   A['pick-folder'] = el => post({ cmd: 'pickFolder', key: el.dataset.v });
@@ -2732,12 +3316,25 @@ if (NATIVE) (() => {
     if (m.ram != null) { set('st-ram', `${m.ram}%`); w('st-ram-b', m.ram); }
     set('st-disk', `${m.drive} ${m.freeGb} GB`);
   }
+  const epgConfig = () => engine('epgConfig', { on: (S.settings.epgSource || 'Broadcast (EIT)') === 'Broadcast (EIT)' && S.settings.epgUpdate !== 'Manually', lang: S.settings.epgLang || 'ara,eng,fre,fra' });
+  settingsChanged = () => { if (Engine.opened) epgConfig(); };
+  let txtOn = false;
   window.chrome.webview.addEventListener('message', e => {
     const m = e.data;
+    if (m.id && HostReq.has(m.id) && (m.evt === 'fetched' || m.evt === 'piconFetched' || m.evt === 'piconSaved')) { HostReq.get(m.id)(m); HostReq.delete(m.id); return; }
     switch (m.evt) {
+      case 'epg': if (Array.isArray(m.events)) epgFromEngine(m.events); break;
+      case 'epgData': epgUnpack(m.data); epgRefreshViews(); break;
+      case 'videoMouse': if (S.settings.osdMouse !== false && !ibOn()) ibShow(3); break;
+      case 'trackChanged': {
+        if (m.act === 'audio') toast(m.name ? `${t('Audio track')}: ${m.name}` : t('This channel has one audio track.'));
+        else if (m.act === 'sub') toast(`${t('Subtitles')}: ${m.name === 'Off' ? t('Off') : m.name}`);
+        else { toast(t(m.name === 'on' ? 'Teletext on' : txtOn ? 'Teletext off' : 'This channel carries no teletext.')); txtOn = m.name === 'on'; }
+        break;
+      }
       case 'ready': engine('list'); break;
       case 'devices': onDevices(m); break;
-      case 'opened': Engine.opening = false; Engine.opened = true; Engine.name = m.name; Engine.caps = m.capabilities; Engine.index = Number(S.settings.device) || 0; Engine.lastTune = null; setMode('ready'); renderStatus(); if (S.view === 'preferences') refresh(); toast(`${t('Tuner ready')}: ${m.name}`, 'good'); if (S.settings.startup === 'last' && S.channels.length && chById(S.player.ch)) tune(S.player.ch); break;
+      case 'opened': epgConfig(); Engine.opening = false; Engine.opened = true; Engine.name = m.name; Engine.caps = m.capabilities; Engine.index = Number(S.settings.device) || 0; Engine.lastTune = null; setMode('ready'); renderStatus(); if (S.view === 'preferences') refresh(); toast(`${t('Tuner ready')}: ${m.name}`, 'good'); if (S.settings.startup === 'last' && S.channels.length && chById(S.player.ch)) tune(S.player.ch); break;
       case 'closed': Engine.opened = false; setMode('nodevice'); break;
       case 'signal': onSignal(m); break;
       case 'scanResult': onScanResult(m); break;
@@ -2755,7 +3352,7 @@ if (NATIVE) (() => {
         break;
       }
       case 'tracks': showTracks(m); break;
-      case 'recPath': Engine.recPath = m.path; engine('recStart', { path: m.path }); Engine.recording = true; Engine.recStart = Date.now(); recording = { ch: S.player.ch, at: Date.now() }; if (S.view === 'live') { renderPlayer(); renderCards(); } toast(`${t('Recording')}: ${curCh().name}`, 'good'); break;
+      case 'recPath': Engine.recPath = m.path; Engine.recCh = S.player.ch; engine('recStart', { path: m.path }); Engine.recording = true; Engine.recStart = Date.now(); recording = { ch: S.player.ch, at: Date.now() }; if (S.view === 'live') { renderPlayer(); renderCards(); } toast(`${t('Recording')}: ${curCh().name}`, 'good'); break;
       case 'diseqcResult': toast(t(m.ok ? 'DiSEqC command sent' : 'The driver refused the DiSEqC command'), m.ok ? 'good' : 'bad'); break;
       case 'fileSaved': toast(`${t('Saved')} ${m.path}`, 'good'); break;
       case 'folderPicked': S.settings[m.key] = m.path; save(); refresh(); break;
@@ -2780,8 +3377,174 @@ if (NATIVE) (() => {
 
   /* First contact */
   S.mode = 'nodevice';
-  setTimeout(() => { post({ cmd: 'uiReady' }); if (!S.satListAt) post({ cmd: 'fetchText', url: SAT_LIST_URL }); }, 0);
+  setTimeout(() => {
+    post({ cmd: 'uiReady' });
+    post({ cmd: 'epgLoad' });
+    if (!S.satListAt) post({ cmd: 'fetchText', url: SAT_LIST_URL });
+    if (S.settings.epgSource === 'XMLTV address' && S.settings.epgUrl && S.settings.epgUpdate !== 'Manually') setTimeout(() => loadXmltv(false), 4000);
+  }, 0);
 })();
+
+/* Info bar: the banner shown over the picture on every channel change, in the style of a satellite receiver.
+   It shows the logo, number and name, clock and date, now and next with progress, satellite and transponder,
+   signal meters, picture format badges, and the audio, subtitle and teletext buttons.
+   In the browser it is drawn in HTML. In the Windows app the picture is a native window, so the same
+   ready-made data goes to a transparent window that sits on top of it (OsdWindow.cs). */
+const IB = { until: 0, pinned: false, timer: 0, last: '' };
+const pad3 = n => String(n ?? '').padStart(3, '0');
+const resOf = ch => (ch?.res || '').split(/\s*[x\u00d7]\s*/).map(Number);
+function qualityOf(ch) {
+  if (ch.type === 'radio') return '';
+  const [w, h] = resOf(ch);
+  if (w >= 3800) return '4K';
+  if (w >= 1900 || h >= 1000) return 'FHD';
+  if (w >= 1200 || h >= 700) return 'HD';
+  if (w) return 'SD';
+  return { '4K': '4K', HD: 'HD', SD: 'SD' }[ch.q] || '';
+}
+function aspectOf(w, h) {
+  const r = w / h;
+  if (Math.abs(r - 16 / 9) < 0.06) return '16:9';
+  if (Math.abs(r - 4 / 3) < 0.06) return '4:3';
+  if (Math.abs(r - 21 / 9) < 0.1) return '21:9';
+  return '';
+}
+const fmtDayLong = d => new Date(d).toLocaleDateString(locale(), { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
+const langName = code => ({ ara: 'Arabic', eng: 'English', fre: 'French', fra: 'French', ger: 'German', deu: 'German', spa: 'Spanish', tur: 'Turkish', ita: 'Italian', por: 'Portuguese', qaa: 'Original', und: '' }[String(code || '').toLowerCase()] ?? code);
+const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+/* Signal for the meters. The Windows app has only what the driver reports: quality goes to SNR and
+   strength to AGC when the driver gives it as a percentage. The browser preview shows simulated values. */
+function ibSignal() {
+  if (S.mode !== 'live') return { snr: null, agc: null };
+  if (NATIVE) {
+    const m = Engine.signal || {};
+    const pct = v => (v == null || v < 0 || v > 100 ? null : Math.round(v));
+    return { snr: pct(m.quality), agc: pct(m.strength) };
+  }
+  return { snr: Math.round(sig.q), agc: Math.round(sig.agc) };
+}
+
+function infobarData(ch = curCh()) {
+  if (!ch || !hasDevice()) return null;
+  const sat = satById(ch.sat), tp = tpOf(ch), now = Date.now();
+  const [n, x] = nowNext(ch);
+  const q = qualityOf(ch), [w, h] = resOf(ch);
+  const badges = [];
+  if (q) badges.push({ t: q, k: 'q' });
+  if (ch.vcodec) badges.push({ t: ch.vcodec, k: '' });
+  if (w && h && q !== 'SD' && aspectOf(w, h)) badges.push({ t: aspectOf(w, h), k: '' });
+  if (w && h) badges.push({ t: `${w}\u00d7${h}`, k: 'res' });
+  const sg = ibSignal();
+  const audioLang = ch.audio?.[S.player.audio] ?? ch.audio?.[0];
+  return {
+    num: pad3(ch.lcn), name: ch.name, fav: !!ch.fav?.length, fta: !!ch.fta,
+    access: `${t(ch.type === 'radio' ? 'Radio' : 'TV')} (${t(ch.fta ? 'Free' : 'Scrambled')})`,
+    badges, time: fmtTime(now), date: fmtDayLong(now),
+    now: n ? { time: `${fmtTime(n.start)} - ${fmtTime(n.end)}`, title: n.title, pct: clamp((now - n.start) / (n.end - n.start) * 100, 0, 100), left: `+${Math.max(0, Math.ceil((n.end - now) / 6e4))} ${t('min')}` } : null,
+    next: x ? { time: `${fmtTime(x.start)} - ${fmtTime(x.end)}`, title: x.title } : null,
+    noEpg: t('No program information for this channel yet'),
+    sat: sat ? `${sat.name} (${sat.pos.toFixed(1)}°${sat.dir})` : '—',
+    tp: tp ? `${tp.freq}  ${tp.pol}  ${tp.sr}  ${tp.fec}` : '—',
+    snr: { label: 'SNR', pct: sg.snr }, agc: { label: 'AGC', pct: sg.agc },
+    audio: { label: t('AUDIO'), sub: [ch.acodec, t(langName(audioLang) || '')].filter(Boolean).join(' · '), on: !!(ch.audio?.length || ch.acodec) },
+    sub: { label: t('SUB'), sub: ch.subs?.length ? `${ch.subs.length}` : '', on: !!ch.subs?.length },
+    txt: { label: t('TXT'), sub: '', on: !!ch.txt },
+    picon: { src: S.picons[ch.id] && S.picons[ch.id] !== 'auto' ? S.picons[ch.id] : '', code: ch.code, num: ch.num || '', c1: ch.p1, c2: ch.p2 },
+    accent: cssVar('--accent'), accent2: cssVar('--accent-2'),
+  };
+}
+
+/* ---------- Drawing ---------- */
+const IBI = {   /* icons drawn for the bar only */
+  dish: '<path d="M4 10a7.31 7.31 0 0 0 10 10Z"/><path d="m9 15 3-3"/><path d="M17 13a6 6 0 0 0-6-6"/><path d="M21 13A10 10 0 0 0 11 3"/>',
+  tower: '<path d="M4.9 16.1a10 10 0 0 1 0-13.2"/><path d="M7.8 13.2a6 6 0 0 1 0-7.4"/><path d="M16.2 5.8a6 6 0 0 1 0 7.4"/><path d="M19.1 2.9a10 10 0 0 1 0 13.2"/><circle cx="12" cy="9.5" r="1.5"/><path d="M12 11v10M9 21h6"/>',
+};
+const ibIcon = n => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${IBI[n]}</svg>`;
+function ibLogo(d) {
+  const p = d.picon;
+  const inner = p.src ? `<img src="${esc(p.src)}" alt="">` : `<span class="ib-mono" style="background:linear-gradient(130deg,${esc(p.c1 || '#3a4678')},${esc(p.c2 || '#1d2547')})">${esc(p.code || 'TV')}${p.num ? `<em>${esc(p.num)}</em>` : ''}</span>`;
+  return `<div class="ib-logo">${d.fav ? `<span class="ib-star">${ic('star', 'fill')}</span>` : ''}${inner}</div>`;
+}
+function infobarHTML(d) {
+  const meter = m => `<span class="ib-meter"><b>${m.label}</b><span class="ib-bar"><i style="width:${m.pct ?? 0}%"></i></span><b class="ltr">${m.pct == null ? '—' : m.pct + '%'}</b></span>`;
+  const btn = (act, icon, b) => `<button class="ib-btn ${b.on ? '' : 'off'}" data-act="${act}" aria-label="${esc(b.label)}">${ic(icon)}<span>${esc(b.label)}</span>${b.sub ? `<small>${esc(b.sub)}</small>` : ''}</button>`;
+  return `${ibLogo(d)}
+    <div class="ib-head"><span class="ib-num ltr">${esc(d.num)}</span>
+      <div class="ib-id"><b dir="auto">${esc(d.name)}</b><span class="ib-acc ${d.fta ? 'ok' : 'ca'}">${ic(d.fta ? 'unlock' : 'lock')}<span dir="auto">${esc(d.access)}</span></span></div>
+      <div class="ib-badges">${d.badges.map(b => `<span class="ib-badge ${b.k}">${esc(b.t)}</span>`).join('')}</div>
+      <div class="ib-clock"><b class="ltr">${esc(d.time)}</b><span>${ic('cal')}<span dir="auto">${esc(d.date)}</span></span></div></div>
+    <div class="ib-epg">${d.now || d.next ? `
+      <div class="ib-row cur"><span class="ib-t ltr">${esc(d.now?.time || '')}</span><div class="ib-title"><b dir="auto">${esc(d.now?.title || '—')}</b><span class="ib-prog"><i style="width:${d.now?.pct ?? 0}%"></i></span></div><span class="ib-left">${esc(d.now?.left || '')}</span></div>
+      <div class="ib-row"><span class="ib-t ltr">${esc(d.next?.time || '')}</span><div class="ib-title"><b dir="auto">${esc(d.next?.title || '—')}</b></div></div>`
+      : `<div class="ib-none">${esc(d.noEpg)}</div>`}</div>
+    <div class="ib-sig"><span class="ib-sat">${ibIcon('dish')}<span>${esc(d.sat)}</span></span><span class="ib-tp ltr">${ibIcon('tower')}<span>${esc(d.tp)}</span></span>${meter(d.snr)}${meter(d.agc)}</div>
+    <div class="ib-btns">${btn('ib-audio', 'vol', d.audio)}${btn('ib-sub', 'cc', d.sub)}${btn('ib-txt', 'text', d.txt)}</div>`;
+}
+
+/* ---------- Showing and hiding ---------- */
+const ibOn = () => IB.pinned || Date.now() < IB.until;
+function ibRender() {
+  const visible = ibOn() && S.view === 'live' && S.layout.video && S.mode === 'live' && S.player.playing && !$('#stage-over')?.children.length;
+  const d = visible ? infobarData() : null;
+  if (NATIVE) {
+    const msg = JSON.stringify(d);
+    if (msg !== IB.last) { IB.last = msg; window.chrome.webview.postMessage({ cmd: 'osd', show: !!d, data: d }); }
+    return;
+  }
+  const stage = $('#stage');
+  if (!stage) return;
+  let el = $('#ib');
+  if (!el) { el = document.createElement('div'); el.id = 'ib'; el.className = 'ib-wrap'; el.setAttribute('role', 'status'); stage.append(el); }
+  stage.classList.toggle('ib-on', !!d);
+  el.classList.toggle('show', !!d);
+  el.dataset.size = S.settings.osdSize || 'normal';
+  if (d) el.innerHTML = `<div class="ib" dir="ltr">${infobarHTML(d)}</div>`;
+}
+function ibShow(sec) {
+  const s = sec ?? Number(S.settings.osdSec ?? 5);
+  IB.pinned = s === 0;
+  IB.until = Date.now() + (s || 5) * 1000;
+  clearTimeout(IB.timer);
+  if (!IB.pinned) IB.timer = setTimeout(ibRender, s * 1000 + 30);
+  ibRender();
+}
+function ibHide() { IB.pinned = false; IB.until = 0; clearTimeout(IB.timer); ibRender(); }
+A.infobar = () => (ibOn() ? ibHide() : ibShow(Number(S.settings.osdSec) || 8));
+
+/* A channel change shows the bar, when the setting allows it. */
+const tuneBase = tune;
+tune = id => { tuneBase(id); if (S.settings.osdZap !== false && chById(id)) ibShow(); };
+
+A['ib-audio'] = el => {
+  if (NATIVE) { window.chrome.webview.postMessage({ cmd: 'cycleAudio' }); return; }
+  A.tracks(el);
+};
+A['ib-sub'] = el => {
+  if (NATIVE) { window.chrome.webview.postMessage({ cmd: 'cycleSub' }); return; }
+  A.tracks(el);
+};
+A['ib-txt'] = () => {
+  if (NATIVE) { window.chrome.webview.postMessage({ cmd: 'teletext' }); return; }
+  toast(t(curCh()?.txt ? 'Teletext shows in the Windows app.' : 'This channel carries no teletext.'), 'warn');
+};
+
+document.addEventListener('keydown', e => {
+  if (e.target.matches?.('input,select,textarea') || modals.length || S.view !== 'live') return;
+  const k = e.key.toLowerCase();
+  if (k === 'i') A.infobar();
+  else if (k === 'escape' && ibOn()) ibHide();
+  else if (k === 'a' && NATIVE) A['ib-audio']();
+  else if (k === 's' && NATIVE) A['ib-sub']();
+  else if (k === 't' && NATIVE) A['ib-txt']();
+});
+/* Moving the mouse over the picture brings the bar back for a moment, like a receiver remote's info key. */
+$('#main')?.addEventListener('mousemove', e => {
+  if (S.settings.osdMouse === false || ibOn() || !e.target.closest?.('#stage') || e.target.closest?.('.controls')) return;
+  ibShow(3);
+});
+setInterval(() => { if (ibOn()) ibRender(); }, 1000);
+onPlayerDrawn = () => { if (ibOn() || IB.last !== 'null') ibRender(); };
 
 /* Start-up */
 (function boot() {

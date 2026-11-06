@@ -56,7 +56,7 @@ A['skin-install'] = async () => {
 
 /* ---------- Settings ---------- */
 let setCat = 'general';
-const CATS = [['general', 'tune', 'General'], ['devices', 'cpu', 'DVB Devices'], ['satellite', 'sat', 'Satellite Settings'], ['diseqc', 'compass', 'DiSEqC & Motor'], ['playback', 'play', 'Playback'], ['audio', 'vol', 'Audio'], ['video', 'film', 'Video'],
+const CATS = [['general', 'tune', 'General'], ['devices', 'cpu', 'DVB Devices'], ['satellite', 'sat', 'Satellite Settings'], ['diseqc', 'compass', 'DiSEqC & Motor'], ['playback', 'play', 'Playback'], ['osd', 'info', 'Info bar'], ['audio', 'vol', 'Audio'], ['video', 'film', 'Video'],
   ['cam', 'card', 'CAM'], ['biss', 'key', 'BISS'], ['recording', 'rec', 'Recording'], ['epg', 'cal', 'EPG'], ['picons', 'pic', 'Picons'], ['themes', 'skin', 'Themes'], ['storage', 'drive', 'Storage'], ['backup', 'archive', 'Backup & Restore'], ['language', 'globe', 'Language']];
 const sRow = (label, sub, ctl, free) => `<div class="set-row"><div><b>${t(label)}</b>${sub ? `<small>${t(sub)}</small>` : ''}</div><div class="ctl ${free ? 'free' : ''}">${ctl}</div></div>`;
 const sSw = (k, label, sub, dis) => sRow(label, sub, `<label class="switch"><input id="set-${k}" type="checkbox" data-chg="set" data-k="${k}" ${S.settings[k] ? 'checked' : ''} ${dis ? 'disabled' : ''} aria-label="${t(label)}"><i></i></label>`, true);
@@ -72,13 +72,28 @@ const CAT_BODY = {
   diseqc: () => `${sSel('diseqc', 'DiSEqC mode', ['None', '1.0', '1.1', '1.2'], 'Ports and motor positions are set per satellite in Satellite Manager.')}
     <div class="set-h">${t('Move dish')}</div><div class="row">${[['West', 'Move west'], ['Stop', 'Stop motor'], ['East', 'Move east'], ['Reference', 'Go to reference'], ['Store', 'Store position']].map(([k, l]) => `<button class="btn sm" data-act="motor" data-v="${l}" ${hasDevice() ? '' : 'disabled'}>${t(l)}</button>`).join('')}</div>${hasDevice() ? '' : `<p class="hint">${t('Motor commands need a connected tuner.')}</p>`}`,
   playback: () => sSel('decoder', 'Decoder', ['Auto', 'LibVLC', 'Software only']) + sSw('hwAccel', 'Hardware decoding when available') + sTxt('buffer', 'Stream buffer (ms)', 'Higher is steadier, lower changes channel faster.', 'inputmode="numeric"') + sSw('reconnect', 'Reconnect after signal loss') + sTxt('reconnectSec', 'Retry every (seconds)', '', 'inputmode="numeric"') + sSw('resumeLast', 'Remember the last channel'),
+  osd: () => `<div class="ib-sample">${ic('info')}<span>${t('The info bar appears over the picture when you change channel. Press I to show or hide it.')}</span></div>`
+    + sSw('osdZap', 'Show on channel change') + sSel('osdSec', 'Show for', [['3', '3 seconds'], ['5', '5 seconds'], ['8', '8 seconds'], ['12', '12 seconds'], ['0', 'Until I hide it']])
+    + sSel('osdSize', 'Size', [['compact', 'Compact'], ['normal', 'Normal'], ['large', 'Large']]) + sSw('osdMouse', 'Show when the mouse moves over the picture')
+    + `<div class="row"><button class="btn sm" data-act="osd-test" ${hasDevice() && S.channels.length ? '' : 'disabled'}>${ic('eye')}${t('Show it now')}</button></div>`,
   audio: () => sSel('audioDevice', 'Output device', ['System default']) + sSel('audioLang', 'Preferred audio language', ['Arabic', 'English', 'French']) + sSel('downmix', 'Channels', ['Stereo', '5.1']) + sSw('passthrough', 'Pass AC3 and E-AC3 to the receiver', 'For HDMI or optical amplifiers.') + sSw('normalize', 'Even out volume between channels'),
   video: () => sSel('deinterlace', 'Deinterlacing', ['Auto', 'Off', 'Bob', 'Yadif']) + sSel('aspect', 'Default aspect ratio', ['Fill', '16:9', '4:3', '21:9']) + sSel('subLang', 'Preferred subtitles', ['Off', 'Arabic', 'English', 'French']) + sTxt('subSize', 'Subtitle size (%)', '', 'inputmode="numeric"'),
   cam: () => sSw('camAuto', 'Connect enabled servers at startup') + sSw('camEncrypt', 'Encrypt saved passwords', 'Uses your Windows account.') + `<div class="row"><button class="btn sm" data-act="go" data-v="cam">${t('Open CAM Manager')}</button></div>`,
   biss: () => sSw('bissEncrypt', 'Encrypt saved keys', 'Uses your Windows account.') + `<div class="row"><button class="btn sm" data-act="go" data-v="biss">${t('Open BISS Manager')}</button></div>`,
   recording: () => (NATIVE ? sRow('Recording folder', S.settings.recFolder, `<button class="btn sm" data-act="pick-folder" data-v="recFolder">${ic('folder')}${t('Choose')}</button>`, true) : sTxt('recFolder', 'Recording folder', 'The desktop app opens a folder picker here.', 'dir="ltr"')) + sSel('recFormat', 'File format', ['TS', 'MKV']) + sTxt('recPad', 'Start early (minutes)', '', 'inputmode="numeric"') + sTxt('recPost', 'End late (minutes)', '', 'inputmode="numeric"') + sSw('recEpgName', 'Name files from the program guide'),
-  epg: () => sSel('epgSource', 'Listings source', ['Broadcast (EIT)', 'XMLTV file', 'XMLTV address']) + sTxt('epgUrl', 'XMLTV address', 'Use a source you are allowed to use.', 'dir="ltr" placeholder="https://"') + sTxt('epgDays', 'Days to keep', '', 'inputmode="numeric"') + sSel('epgUpdate', 'Update listings', ['While tuned', 'On a schedule', 'Manually']),
-  picons: () => sTxt('piconFolder', 'Logo folder', '', 'dir="ltr"') + sSel('piconFormat', 'Formats', ['PNG and SVG', 'PNG only', 'SVG only']) + `<div class="row"><button class="btn sm" data-act="go" data-v="picons">${t('Open Picon Manager')}</button></div>`,
+  epg: () => sSel('epgSource', 'Listings source', ['Broadcast (EIT)', 'XMLTV file', 'XMLTV address'], 'Broadcast listings are read from the tuned transponder. Many satellites also carry the guide for other transponders.')
+    + sSel('epgLang', 'Preferred listing language', [['ara,eng,fre,fra', 'Arabic'], ['eng,ara,fre,fra', 'English'], ['fre,fra,ara,eng', 'French']])
+    + sTxt('epgUrl', 'XMLTV address', 'Use a source you are allowed to use. Gzip files work too.', 'dir="ltr" placeholder="https://"') + sTxt('epgDays', 'Days to keep', '', 'inputmode="numeric"') + sSel('epgUpdate', 'Update listings', ['While tuned', 'On a schedule', 'Manually'])
+    + `<div class="row"><button class="btn sm" data-act="epg-xmltv-url">${ic('download')}${t('Load from address')}</button><button class="btn sm" data-act="epg-xmltv-file">${ic('upload')}${t('Load XMLTV file')}</button><button class="btn sm danger" data-act="epg-clear">${ic('trash')}${t('Clear listings')}</button></div>`,
+  picons: () => `<div class="set-h">${t('Download logos from the internet')}</div>`
+    + sSel('piconSource', 'Logo source', [['picons', 'picons project (GitHub)'], ['custom', 'My own server']], 'NOVA matches each channel by its service reference, then by its name.')
+    + (S.settings.piconSource === 'custom' ? sTxt('piconCustom', 'Address pattern', 'Use {srp} for the Enigma2 picon name (1_0_19_...), {snp} for the simplified name, {name} for the channel name.', 'dir="ltr" placeholder="https://example.com/picon/{srp}.png"')
+      : sTxt('piconBase', 'Project address', 'Change only if you use a copy of the picons project.', 'dir="ltr"') + sSel('piconStyle', 'Logo style', [['default', 'Default'], ['light', 'Light (for dark backgrounds)'], ['dark', 'Dark (for light backgrounds)']]))
+    + sSw('piconAuto', 'Download logos for new channels after a scan')
+    + `<div class="row"><button class="btn sm primary" data-act="pic-online" ${chans().length ? '' : 'disabled'}>${ic('download')}${t('Download missing logos')}</button><button class="btn sm" data-act="pic-index">${ic('refresh')}${t('Refresh logo index')}</button><button class="btn sm" data-act="pic-site">${ic('globe')}${t('Open the picons website')}</button></div>`
+    + `<div class="set-h">${t('Logo files')}</div>`
+    + (NATIVE ? sRow('Logo folder', 'Downloaded logos are kept here.', `<button class="btn sm" data-act="pic-folder">${ic('folder')}${t('Open folder')}</button>`, true) : sTxt('piconFolder', 'Logo folder', '', 'dir="ltr"'))
+    + `<div class="row"><button class="btn sm" data-act="go" data-v="picons">${t('Open Picon Manager')}</button></div>`,
   themes: () => `<p class="sub">${t('Themes live in their own screen so you can preview them across the app.')}</p><div class="row"><button class="btn sm" data-act="go" data-v="skins">${t('Open Skins & Themes')}</button></div>`,
   storage: () => sTxt('dbPath', 'Database file', 'Channels, satellites and settings.', 'dir="ltr"') + sTxt('logDays', 'Keep logs for (days)', '', 'inputmode="numeric"') + sSel('logLevel', 'Log detail', ['Errors only', 'Warnings', 'Information', 'Debug']),
   backup: () => `<p class="sub">${t('Create and restore backups from the Backup & Restore screen.')}</p><div class="row"><button class="btn sm" data-act="go" data-v="backup">${t('Open Backup & Restore')}</button></div>`,
@@ -88,7 +103,17 @@ SCREENS.preferences = () => `<div class="page">${pageHead('gear', 'Settings', 'C
   <div class="panes" style="grid-template-columns:232px minmax(0,1fr)"><section class="card pane"><nav class="set-nav scroll" aria-label="${t('Settings')}">${CATS.map(([k, i, l]) => `<button data-act="set-cat" data-v="${k}" aria-current="${setCat === k}">${ic(i)}<span>${t(l)}</span></button>`).join('')}</nav></section>
     <section class="card pane scroll"><div class="card-head"><h2>${t(CATS.find(c => c[0] === setCat)[2])}</h2></div>${CAT_BODY[setCat]()}</section></div></div>`;
 A['set-cat'] = el => { setCat = el.dataset.v; refresh(); };
-CHG.set = el => { const k = el.dataset.k; S.settings[k] = el.type === 'checkbox' ? el.checked : el.value; if (k === 'aspect') S.player.aspect = el.value; save(); };
+CHG.set = el => {
+  const k = el.dataset.k; S.settings[k] = el.type === 'checkbox' ? el.checked : el.value;
+  if (k === 'aspect') S.player.aspect = el.value;
+  save();
+  if (k === 'piconSource' || k === 'epgSource') refresh();
+  if (k === 'epgSource' || k === 'epgLang') settingsChanged?.(k);
+  if (k.startsWith('osd') && typeof ibOn === 'function' && ibOn()) ibRender();
+};
+/* Hook for the Windows app: some settings go to the engine at once. */
+let settingsChanged = null;
+A['osd-test'] = () => { go('live'); setTimeout(() => ibShow(), 60); };
 CHG.lang = el => { S.lang = el.value; save(); renderAll(); };
 A.motor = el => toast(`${t(el.dataset.v)}: ${t('simulated, no motor is connected')}`, 'warn');
 A.detect2 = async () => { toast(t('No tuner found. This preview cannot reach hardware.'), 'warn'); };

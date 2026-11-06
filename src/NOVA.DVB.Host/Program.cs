@@ -22,6 +22,7 @@ internal static class Program
     private static NamedPipeServerStream? _pipe;
     private static volatile bool _pipeReady;
     private static ServiceScanner? _scanner;
+    private static readonly SiMonitor Guide = new();
     private static TsAligner? _aligner;
     private static FileStream? _recording;
     private static bool _mock;
@@ -38,6 +39,7 @@ internal static class Program
         StartPipe(pipeName);
         new Thread(ReadCommands) { IsBackground = true, Name = "stdin" }.Start();
         using var signalTimer = new Timer(_ => Commands.TryAdd(new JsonObject { ["cmd"] = "pollSignal" }), null, 1000, 1000);
+        using var epgTimer = new Timer(_ => Commands.TryAdd(new JsonObject { ["cmd"] = "flushEpg" }), null, 2500, 2500);
 
         Emit("ready", new JsonObject { ["pid"] = Environment.ProcessId });
         foreach (var cmd in Commands.GetConsumingEnumerable())
@@ -83,7 +85,15 @@ internal static class Program
                 break;
             case "tune":
                 Require().Tune(c.Deserialize<TuneRequest>(Wire.Json)!);
+                Guide.Retuned();
                 Emit("tuned", new JsonObject { ["freqMHz"] = (int?)c["freqMHz"] });
+                break;
+            case "epgConfig":
+                Guide.Enabled = (bool?)c["on"] ?? true;
+                Guide.PreferredLanguages = (string?)c["lang"] ?? "";
+                break;
+            case "flushEpg":
+                FlushEpg();
                 break;
             case "pollSignal":
                 if (_tuner != null) Emit("signal", (JsonObject)JsonSerializer.SerializeToNode(_tuner.ReadSignal(), Wire.Json)!);
@@ -118,7 +128,11 @@ internal static class Program
         Close();
         _tuner = _mock ? new MockTuner() : new BdaTuner(index);
         _tuner.Data += OnData;
-        _aligner = new TsAligner((p, o) => _scanner?.FeedPacket(p, o));
+        _aligner = new TsAligner((p, o) =>
+        {
+            _scanner?.FeedPacket(p, o);
+            Guide.FeedPacket(p, o);
+        });
         Emit("opened", new JsonObject { ["name"] = _tuner.Name, ["capabilities"] = JsonSerializer.SerializeToNode(_tuner.Capabilities, Wire.Json) });
     }
 
@@ -137,17 +151,23 @@ internal static class Program
     {
         var tuner = Require();
         int timeout = (int?)c["timeoutMs"] ?? 12000;
+        bool wantNit = (bool?)c["nit"] ?? false;
         var scanner = new ServiceScanner();
         _scanner = scanner;
         tuner.Tune(c["tune"].Deserialize<TuneRequest>(Wire.Json)!);
+        Guide.Retuned();
 
-        long deadline = Environment.TickCount64 + timeout, lockDeadline = Environment.TickCount64 + 3500;
+        long deadline = Environment.TickCount64 + timeout, lockDeadline = Environment.TickCount64 + 3500, completeAt = 0;
         bool locked = false;
-        while (Environment.TickCount64 < deadline && !scanner.IsComplete)
+        while (Environment.TickCount64 < deadline)
         {
             Thread.Sleep(150);
             locked |= tuner.ReadSignal().Locked;
             if (!locked && !scanner.HasPat && Environment.TickCount64 > lockDeadline) break;
+            if (!scanner.IsComplete) continue;
+            if (completeAt == 0) completeAt = Environment.TickCount64;
+            // The NIT repeats less often than the PAT and SDT, so it gets a few more seconds.
+            if (!wantNit || scanner.HasNit || Environment.TickCount64 > completeAt + 3000) break;
         }
         _scanner = null;
         var services = scanner.Services.Where(s => s.Name.Length > 0 || s.Streams.Count > 0).ToList();
@@ -156,13 +176,26 @@ internal static class Program
             ["id"] = c["id"]?.DeepClone(),
             ["locked"] = locked || scanner.HasPat,
             ["complete"] = scanner.IsComplete,
+            ["onid"] = scanner.Onid,
             ["services"] = JsonSerializer.SerializeToNode(services, Wire.Json),
+            ["transponders"] = JsonSerializer.SerializeToNode(scanner.Transponders.ToList(), Wire.Json),
         });
+    }
+
+    /// <summary>Sends guide events read since the last call, in pieces small enough for one message.</summary>
+    private static void FlushEpg()
+    {
+        var events = Guide.Drain();
+        for (int i = 0; i < events.Count; i += 1500)
+        {
+            var part = events.GetRange(i, Math.Min(1500, events.Count - i));
+            Emit("epg", new JsonObject { ["events"] = JsonSerializer.SerializeToNode(part, Wire.Json) });
+        }
     }
 
     private static void OnData(byte[] data, int length)
     {
-        if (_scanner != null) _aligner?.Feed(data, length);
+        if (_scanner != null || Guide.Enabled) _aligner?.Feed(data, length);
         try { _recording?.Write(data, 0, length); }
         catch (IOException ex)
         {

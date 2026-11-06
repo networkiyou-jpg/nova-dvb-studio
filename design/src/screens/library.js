@@ -101,7 +101,7 @@ const EG = { day: 0, q: '', group: 'tv' };
 const PX = 3.4;
 SCREENS.epg = () => {
   const base = new Date(); base.setHours(0, 0, 0, 0); base.setDate(base.getDate() + EG.day);
-  const d0 = base.getTime(), d1 = d0 + 864e5, list = chans().filter(c => !c.hidden && (EG.group === 'all' || (EG.group === 'fav' ? c.fav.length : c.type === EG.group))).slice(0, 26);
+  const d0 = base.getTime(), d1 = d0 + 864e5, list = chans().filter(c => !c.hidden && (EG.group === 'all' || (EG.group === 'fav' ? c.fav.length : c.type === EG.group))).slice(0, 150);
   const q = EG.q.trim().toLowerCase();
   const hits = q ? list.flatMap(c => epgFor(c).filter(p => p.end > Date.now() && p.title.toLowerCase().includes(q)).map(p => ({ c, p }))).sort((a, b) => a.p.start - b.p.start).slice(0, 60) : [];
   const nowX = (Date.now() - d0) / 6e4 * PX;
@@ -111,16 +111,22 @@ SCREENS.epg = () => {
       ${epgFor(c).filter(p => p.end > d0 && p.start < d1).map(p => { const a = Math.max(p.start, d0), b = Math.min(p.end, d1), x = offs + (a - d0) / 6e4 * PX, w = (b - a) / 6e4 * PX - 3, now = p.start <= Date.now() && p.end > Date.now(), tm = S.timers.some(k => k.pid === p.id);
     return `<button class="epg-p ${now ? 'is-now' : ''} ${tm ? 'timer' : ''}" style="inset-inline-start:${x}px;width:${w}px" data-act="epg-open" data-v="${c.id}|${p.id}"><b>${esc(p.title)}</b><small class="ltr">${fmtTime(p.start)} - ${fmtTime(p.end)}</small></button>`; }).join('')}</div>`).join('')}
     ${EG.day === 0 ? `<div class="epg-line" style="inset-inline-start:${offs + nowX}px"></div>` : ''}</div></div>`;
-  return `<div class="page">${pageHead('cal', 'Program Guide', 'What is on now and next. Pick a program to watch it or schedule a recording.', `<span class="hint">${t(!NATIVE && hasDevice() ? 'Sample listings' : 'No listings yet')}</span>`)}
+  const anyData = list.some(c => epgFor(c).length), live = hasLiveEpg();
+  const src = S.settings.epgSource || 'Broadcast (EIT)';
+  const headActs = `<span class="hint">${t(live ? (src === 'Broadcast (EIT)' ? 'From the broadcast' : 'From XMLTV') : !NATIVE && anyData ? 'Sample listings' : 'No listings yet')}</span>
+    ${src === 'XMLTV address' ? `<button class="btn" data-act="epg-xmltv-url">${ic('refresh')}${t('Update listings')}</button>` : ''}
+    ${src === 'XMLTV file' ? `<button class="btn" data-act="epg-xmltv-file">${ic('upload')}${t('Load XMLTV file')}</button>` : ''}
+    ${live ? `<button class="btn" data-act="epg-clear">${ic('trash')}${t('Clear')}</button>` : ''}`;
+  return `<div class="page">${pageHead('cal', 'Program Guide', 'What is on now and next. Pick a program to watch it or schedule a recording.', headActs)}
     <section class="card pane" style="flex:1"><div class="row">
-      <button class="icon-btn" data-act="epg-day" data-v="-1" aria-label="${t('Previous day')}" data-tip="${t('Previous day')}" ${EG.day <= -1 ? 'disabled' : ''}>${ic('prev')}</button><b style="min-width:128px;text-align:center">${EG.day === 0 ? t('Today') : fmtDayShort(d0)}</b><button class="icon-btn" data-act="epg-day" data-v="1" aria-label="${t('Next day')}" data-tip="${t('Next day')}" ${EG.day >= 1 ? 'disabled' : ''}>${ic('next')}</button>
+      <button class="icon-btn" data-act="epg-day" data-v="-1" aria-label="${t('Previous day')}" data-tip="${t('Previous day')}" ${EG.day <= -1 ? 'disabled' : ''}>${ic('prev')}</button><b style="min-width:128px;text-align:center">${EG.day === 0 ? t('Today') : fmtDayShort(d0)}</b><button class="icon-btn" data-act="epg-day" data-v="1" aria-label="${t('Next day')}" data-tip="${t('Next day')}" ${EG.day >= Math.min(6, (Number(S.settings.epgDays) || 7) - 1) ? 'disabled' : ''}>${ic('next')}</button>
       <div class="seg" style="width:260px">${[['tv', 'TV'], ['radio', 'Radio'], ['fav', 'Favorites']].map(([v, l]) => `<button data-act="epg-grp" data-v="${v}" aria-pressed="${EG.group === v}">${t(l)}</button>`).join('')}</div>
       <span class="sp"></span><label class="search" style="width:min(300px,100%)">${ic('search')}<input id="epg-q" type="search" value="${esc(EG.q)}" placeholder="${t('Search programs...')}" data-chg="epg-q" aria-label="${t('Search programs...')}"></label></div>
-      ${NATIVE || !list.length ? `<div class="empty">${ic('cal')}<b>${t('No program data')}</b><span>${t('Listings arrive with the broadcast once a channel is tuned.')}</span></div>` : q ? `<div class="scroll" style="display:grid;gap:2px;align-content:start;flex:1">${hits.map(({ c, p }) => `<button class="list-item" data-act="epg-open" data-v="${c.id}|${p.id}">${picon(c)}<div><b>${esc(p.title)}</b><small>${esc(c.name)} &nbsp;•&nbsp; <span class="ltr">${fmtDayShort(p.start)} ${fmtTime(p.start)}</span></small></div></button>`).join('') || `<div class="empty">${ic('search')}<span>${t('No programs match')}</span></div>`}</div>` : grid}
+      ${!anyData ? `<div class="empty">${ic('cal')}<b>${t('No program data')}</b><span>${t(src === 'Broadcast (EIT)' ? 'Listings arrive with the broadcast once a channel is tuned.' : 'Load your XMLTV guide with the button above.')}</span></div>` : q ? `<div class="scroll" style="display:grid;gap:2px;align-content:start;flex:1">${hits.map(({ c, p }) => `<button class="list-item" data-act="epg-open" data-v="${c.id}|${p.id}">${picon(c)}<div><b>${esc(p.title)}</b><small>${esc(c.name)} &nbsp;•&nbsp; <span class="ltr">${fmtDayShort(p.start)} ${fmtTime(p.start)}</span></small></div></button>`).join('') || `<div class="empty">${ic('search')}<span>${t('No programs match')}</span></div>`}</div>` : grid}
     </section></div>`;
 };
 SCREENS.epg.mount = () => { const g = $('#epg-grid'); if (g && EG.day === 0) g.scrollLeft = Math.max(0, (Date.now() - new Date().setHours(0, 0, 0, 0)) / 6e4 * PX - 120) * (S.lang === 'ar' ? -1 : 1); };
-A['epg-day'] = el => { EG.day = clamp(EG.day + Number(el.dataset.v), -1, 1); renderView(); };
+A['epg-day'] = el => { EG.day = clamp(EG.day + Number(el.dataset.v), -1, Math.min(6, (Number(S.settings.epgDays) || 7) - 1)); renderView(); };
 A['epg-grp'] = el => { EG.group = el.dataset.v; renderView(); };
 CHG['epg-q'] = el => { EG.q = el.value; const pos = el.selectionStart; renderView(); const i = $('#epg-q'); i.focus(); i.setSelectionRange(pos, pos); };
 function openProgramme(ch, p) {
@@ -133,7 +139,7 @@ function openProgramme(ch, p) {
   };
   A[id2] = () => { closeModal(); go('live'); tune(ch.id); };
   openModal({ title: p.title, width: 480, body: `<div class="row">${picon(ch)}<b>${esc(ch.name)}</b></div>
-    <dl class="kv dl-plain"><dt>${t('Date')}</dt><dd>${fmtDay(p.start)}</dd><dt>${t('Time')}</dt><dd class="ltr" style="text-align:start">${fmtTime(p.start)} - ${fmtTime(p.end)}</dd><dt>${t('Length')}</dt><dd>${Math.round((p.end - p.start) / 6e4)} ${t('min')}</dd></dl><p class="sub">${t(p.desc)}</p>`,
+    <dl class="kv dl-plain"><dt>${t('Date')}</dt><dd>${fmtDay(p.start)}</dd><dt>${t('Time')}</dt><dd class="ltr" style="text-align:start">${fmtTime(p.start)} - ${fmtTime(p.end)}</dd><dt>${t('Length')}</dt><dd>${Math.round((p.end - p.start) / 6e4)} ${t('min')}</dd></dl><p class="sub" dir="auto">${esc(p.desc === EPG_DESC ? t(p.desc) : p.desc || '')}</p>`,
     foot: `<button class="btn" data-act="modal-close">${t('Close')}</button><button class="btn" data-act="${id2}">${ic('play')}${t('Watch channel')}</button>${past ? '' : `<button class="btn primary" data-act="${id}">${ic('dot')}${t(has ? 'Cancel recording' : 'Schedule recording')}</button>`}` });
 }
 
@@ -148,7 +154,7 @@ SCREENS.recordings = () => {
       <div class="stat"><small>${t('Free space')}</small><b class="ltr" style="text-align:start">${diskFree()} GB</b>${NATIVE ? '' : `<span class="bar"><i style="width:${(1 - DISK.free / DISK.total) * 100}%;background:var(--grad)"></i></span>`}</div>
       <div class="stat"><small>${t('Used by recordings')}</small><b class="ltr" style="text-align:start">${used.toFixed(1)} GB</b></div>
       <div class="stat"><small>${t('Recorded programs')}</small><b>${S.recordings.length}</b></div><div class="stat"><small>${t('Scheduled')}</small><b>${S.timers.length}</b></div></div>
-      <div class="row hint">${ic('folder')}<span class="ltr">${esc(S.settings.recFolder)}</span><span class="sp"></span><span>${t(NATIVE ? 'Scheduled recordings do not start by themselves in this build.' : 'Sample figures in this preview')}</span></div></section>
+      <div class="row hint">${ic('folder')}<span class="ltr">${esc(S.settings.recFolder)}</span><span class="sp"></span><span>${t(NATIVE ? 'Scheduled recordings start by themselves while NOVA is open.' : 'Sample figures in this preview')}</span></div></section>
     <div class="panes" style="grid-template-columns:minmax(0,1.5fr) minmax(0,1fr)">
       <section class="card pane"><div class="card-head">${ic('film')}<h2>${t('Recorded')}</h2></div><div class="tbl-wrap"><table class="tbl"><thead><tr><th>${t('Program')}</th><th>${t('Channel')}</th><th>${t('Date')}</th><th>${t('Length')}</th><th>${t('Size')}</th><th></th></tr></thead><tbody>
         ${S.recordings.map(r => `<tr><td>${esc(r.title)}</td><td>${esc(chById(r.ch)?.name || '—')}</td><td>${fmtDayShort(r.at)}</td><td>${r.mins} ${t('min')}</td><td class="ltr">${r.gb} GB</td><td><div class="acts"><button class="icon-btn" data-act="rec-play" data-v="${r.id}" aria-label="${t('Play')}" data-tip="${t('Play')}">${ic('play')}</button><button class="icon-btn" data-act="rec-del" data-v="${r.id}" aria-label="${t('Delete')}" data-tip="${t('Delete')}">${ic('trash')}</button></div></td></tr>`).join('')}</tbody></table>

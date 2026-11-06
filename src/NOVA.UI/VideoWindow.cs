@@ -24,6 +24,14 @@ internal sealed class VideoWindow : Window
     /// <summary>Double-click on the picture, or Esc while it has focus.</summary>
     public event Action? FullscreenToggle;
 
+    /// <summary>The mouse moved over the picture, at most a few times a second.</summary>
+    public event Action? PointerMoved;
+
+    /// <summary>The info bar that rides on top of the picture.</summary>
+    public OsdWindow? Osd { get; set; }
+
+    private long _lastMove;
+
     public VideoWindow(Window owner, WebView2 host)
     {
         _host = host;
@@ -38,6 +46,13 @@ internal sealed class VideoWindow : Window
         Handle = new WindowInteropHelper(this).EnsureHandle();
         MouseLeftButtonDown += (_, e) => { if (e.ClickCount == 2) FullscreenToggle?.Invoke(); };
         KeyDown += (_, e) => { if (e.Key == System.Windows.Input.Key.Escape) FullscreenToggle?.Invoke(); };
+        MouseMove += (_, _) =>
+        {
+            long now = Environment.TickCount64;
+            if (now - _lastMove < 400) return;
+            _lastMove = now;
+            PointerMoved?.Invoke();
+        };
     }
 
     public void SetRect(double x, double y, double w, double h, double dpr, bool show)
@@ -52,6 +67,7 @@ internal sealed class VideoWindow : Window
         if (!visible)
         {
             if (IsVisible) Hide();
+            Osd?.Follow(0, 0, 0, 0, _dpr, false);
             return;
         }
         if (!IsVisible) Show();
@@ -61,6 +77,7 @@ internal sealed class VideoWindow : Window
         SetWindowPos(Handle, IntPtr.Zero, px, py, pw, ph, SwpNoActivate | SwpNoZOrder);
         int r = (int)(CornerRadius * _dpr) * 2;
         SetWindowRgn(Handle, CreateRoundRectRgn(0, 0, pw + 1, ph + 1, r, r), true);
+        Osd?.Follow(px, py, pw, ph, _dpr, true);
     }
 
     [DllImport("user32.dll")] private static extern bool SetWindowPos(IntPtr hwnd, IntPtr after, int x, int y, int w, int h, uint flags);
