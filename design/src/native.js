@@ -80,6 +80,9 @@ if (NATIVE) (() => {
 
   /* ---------- Scan ---------- */
   const SVC_HD = [0x11, 0x19, 0x20, 0x1F];
+  const HD_NAME = /\b(F?HD|1080[ip]?|720p)\b/i;
+  /* Many HD channels still announce a plain TV service type, so names fix saved lists at start-up. */
+  S.channels.forEach(c => { if (c.q === 'SD' && !c.res && HD_NAME.test(c.name)) c.q = 'HD'; });
   A['scan-start'] = () => {
     const s = satById(scan.sat);
     if (!Engine.opened) { toast(t('No satellite tuner found'), 'warn'); return; }
@@ -122,9 +125,9 @@ if (NATIVE) (() => {
     scan.found.forEach(f => {
       if (S.channels.some(c => c.sat === sat.id && c.f === f.tp.freq && c.p === f.tp.pol && c.sid === f.sid)) return;
       if (!sat.tps.some(p => p.freq === f.tp.freq && p.pol === f.tp.pol)) sat.tps.push({ id: uid('tp'), ...f.tp });
-      const radio = f.type === 'radio', hd = SVC_HD.includes(f.svcType);
+      const radio = f.type === 'radio', hd = SVC_HD.includes(f.svcType) || HD_NAME.test(f.name) || f.video?.codec === 'H.265';
       const words = f.name.replace(/[^\p{L}\p{N} ]/gu, '').trim().split(/\s+/);
-      S.channels.push({ id: uid('ch'), lcn: S.channels.length + 1, name: f.name, provider: f.provider || '', code: words.slice(0, 2).map(w => w[0] || '').join('').toUpperCase() || 'TV', num: '', kind: radio ? 'radio' : 'news', q: radio ? 'R' : f.svcType === 0x1F ? '4K' : hd ? 'HD' : 'SD', p1: '#3a4678', p2: '#1d2547', type: f.type, sat: sat.id, f: f.tp.freq, p: f.tp.pol, tp: 0,
+      S.channels.push({ id: uid('ch'), lcn: S.channels.length + 1, name: f.name, provider: f.provider || '', code: words.slice(0, 2).map(w => w[0] || '').join('').toUpperCase() || 'TV', num: '', kind: radio ? 'radio' : 'news', q: radio ? 'R' : f.svcType === 0x1F || /\b(4K|UHD)\b/i.test(f.name) ? '4K' : hd ? 'HD' : 'SD', p1: '#3a4678', p2: '#1d2547', type: f.type, sat: sat.id, f: f.tp.freq, p: f.tp.pol, tp: 0,
         vcodec: f.video?.codec || '', acodec: f.audio[0]?.codec || '', res: '', kbps: 0, sid: f.sid, tsid: f.tsid, vpid: f.video?.pid || 0, apid: f.audio[0]?.pid || 0,
         audio: f.audio.map(a => a.lang || a.codec), subs: f.subs.map(a => a.lang), fta: f.fta, fav: [], locked: false, hidden: false });
       added++;
@@ -174,7 +177,6 @@ if (NATIVE) (() => {
   A.about = () => openModal({ title: 'NOVA DVB Studio', width: 480, body: `<dl class="kv dl-plain"><dt>${t('Version')}</dt><dd class="ltr">0.1.0</dd><dt>${t('Tuner')}</dt><dd>${esc(Engine.name || t('No tuner'))}</dd><dt>${t('Extension')}</dt><dd>${esc(Engine.caps?.extension || '—')}</dd><dt>${t('Icons')}</dt><dd>Lucide (ISC)</dd><dt>${t('Video')}</dt><dd>LibVLC (LGPL)</dd></dl>`, foot: `<button class="btn" data-act="logs">${t('Open log folder')}</button><button class="btn primary" data-act="modal-close">${t('Close')}</button>` });
   A.logs = () => post({ cmd: 'openLogs' });
   saveFile = async (filename, text) => post({ cmd: 'saveFile', name: filename, text });
-  A['srv-test'] = () => toast(t('Connection test arrives with the CAM stage.'), 'warn');
   A['pick-folder'] = el => post({ cmd: 'pickFolder', key: el.dataset.v });
 
   /* ---------- Settings: devices ---------- */
@@ -246,7 +248,16 @@ if (NATIVE) (() => {
       case 'stats': onStats(m); break;
       case 'fetched': onSatList(m); break;
       case 'toggleFs': A.fullscreen(); break;
-      case 'videoInfo': { const c = curCh(); if (c) { c.res = `${m.width} x ${m.height}`; if (S.view === 'live') renderNow(); } break; }
+      case 'videoInfo': {
+        const c = curCh();
+        if (c) {
+          c.res = `${m.width} x ${m.height}`;
+          c.q = m.width >= 3000 ? '4K' : m.width >= 1200 ? 'HD' : 'SD';      /* the decoded picture is the final word */
+          save();
+          if (S.view === 'live') { renderNow(); renderList(true); renderPlayer(); }
+        }
+        break;
+      }
       case 'tracks': showTracks(m); break;
       case 'recPath': Engine.recPath = m.path; engine('recStart', { path: m.path }); Engine.recording = true; Engine.recStart = Date.now(); recording = { ch: S.player.ch, at: Date.now() }; if (S.view === 'live') { renderPlayer(); renderCards(); } toast(`${t('Recording')}: ${curCh().name}`, 'good'); break;
       case 'diseqcResult': toast(t(m.ok ? 'DiSEqC command sent' : 'The driver refused the DiSEqC command'), m.ok ? 'good' : 'bad'); break;

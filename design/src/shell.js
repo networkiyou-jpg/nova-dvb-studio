@@ -198,24 +198,36 @@ function visibleChannels() {
   if (f.fta) list = list.filter(c => c.fta);
   if (f.sat) list = list.filter(c => c.sat === f.sat);
   if (q) list = list.filter(c => c.name.toLowerCase().includes(q));
-  if (f.sort === 'name') list = [...list].sort((a, b) => a.name.localeCompare(b.name));
+  return sortChannels(list, f.sort);
+}
+/* Shared by the channel list and Channel Manager. */
+function sortChannels(list, sort) {
+  const lon = c => { const s = satById(c.sat); return s ? lonOf(s) : 999; };
+  if (sort === 'name') return [...list].sort((a, b) => a.name.localeCompare(b.name));
+  if (sort === 'sat') return [...list].sort((a, b) => lon(a) - lon(b) || a.lcn - b.lcn);
   return list;
 }
+/* Satellites that have channels, west to east, for the satellite pickers. */
+const channelSats = () => S.sats.filter(s => S.channels.some(c => c.sat === s.id)).sort((a, b) => lonOf(a) - lonOf(b));
+const satOptions = cur => `<option value="">${t('All satellites')}</option>${channelSats().map(s => `<option value="${s.id}" ${cur === s.id ? 'selected' : ''}>${esc(satLabel(s))}</option>`).join('')}`;
+const sortOptions = cur => [['lcn', 'Channel number'], ['name', 'Name (A to Z)'], ['sat', 'Satellite']].map(([v, l]) => `<option value="${v}" ${cur === v ? 'selected' : ''}>${t(l)}</option>`).join('');
 function renderList(keepSearch) {
   const el = $('#p-list'); if (!el) return;
   const f = S.filter, list = hasDevice() ? visibleChannels() : [], cur = S.player.ch;
-  const filtered = f.hd || f.fta || f.sat;
+  if (f.sat && !satById(f.sat)) f.sat = '';
+  const filtered = f.hd || f.fta;
   if (!keepSearch) el.innerHTML = `<div class="list-pad">
       <div class="card-head">${ic('cal')}<h2>${t('Channel List')} <span class="sub" id="ch-count"></span></h2><span class="sp"></span>
         <button class="icon-btn" data-act="list-filter" aria-label="${t('Filter channels')}" data-tip="${t('Filter channels')}" style="${filtered ? 'color:var(--accent-2)' : ''}">${ic('filter')}</button>
         <button class="icon-btn" data-act="list-menu" aria-label="${t('Channel list options')}" data-tip="${t('Channel list options')}">${ic('menu')}</button></div>
       <label class="search">${ic('search')}<input id="ch-search" type="search" value="${esc(f.q)}" placeholder="${t('Search channels...')}" data-chg="ch-search" aria-label="${t('Search channels...')}"></label>
+      <div class="grid2" style="gap:6px"><select class="sel" id="ch-sat" data-chg="ch-sat" aria-label="${t('Satellite')}">${satOptions(f.sat)}</select><select class="sel" id="ch-sort" data-chg="ch-sort" aria-label="${t('Sort by')}">${sortOptions(f.sort)}</select></div>
       <div class="seg" role="group" aria-label="${t('Channel type')}">${[['all', '', 'All'], ['tv', 'tv', 'TV'], ['radio', 'head', 'Radio'], ['fav', 'star', 'Favorites']].map(([v, i, l]) => `<button data-act="list-tab" data-v="${v}" aria-pressed="${f.tab === v}">${i ? ic(i) : ''}${t(l)}</button>`).join('')}</div>
     </div><ul class="ch-list" id="ch-list"></ul>`;
   $('#ch-count').textContent = hasDevice() ? `(${list.length})` : '(0)';
   $('#ch-list').innerHTML = !hasDevice() || !S.channels.length
     ? `<li class="empty">${ic('list')}<b>${t('No channels yet')}</b><span>${t('Run a scan after a tuner is connected. Your list will appear here.')}</span><button class="btn sm" data-act="go" data-v="scan">${t('Open Transponder Scan')}</button></li>`
-    : list.length ? list.map(c => `<li class="ch ${c.id === cur ? 'on' : ''}" data-act="play-ch" data-v="${c.id}" tabindex="0" role="button" aria-current="${c.id === cur}" aria-label="${esc(c.name)}">
+    : list.length ? list.map((c, i) => `${f.sort === 'sat' && !f.sat && list[i - 1]?.sat !== c.sat ? `<li class="ch-group">${esc(satLabel(satById(c.sat)))}</li>` : ''}<li class="ch ${c.id === cur ? 'on' : ''}" data-act="play-ch" data-v="${c.id}" tabindex="0" role="button" aria-current="${c.id === cur}" aria-label="${esc(c.name)}">
         ${picon(c)}<span class="nm">${esc(c.name)}</span>${c.locked ? ic('lock') : ''}<span class="badge ltr">${c.q === 'R' ? 'FM' : esc(c.q)}</span>
         <button class="icon-btn star ${c.fav.length ? 'on' : ''}" data-act="toggle-fav" data-v="${c.id}" aria-pressed="${!!c.fav.length}" aria-label="${t('Favorite')}: ${esc(c.name)}">${ic('star')}</button></li>`).join('')
       : `<li class="empty">${ic('search')}<b>${t('No channels match')}</b><button class="btn sm" data-act="clear-filter">${t('Clear filters')}</button></li>`;
@@ -339,18 +351,16 @@ A['open-settings'] = el => { setCat = el.dataset.v || setCat; go('preferences');
 
 /* Channel list actions */
 A['list-tab'] = el => { S.filter.tab = el.dataset.v; save(); renderList(); };
+CHG['ch-sat'] = el => { S.filter.sat = el.value; save(); renderList(true); };
+CHG['ch-sort'] = el => { S.filter.sort = el.value; save(); renderList(true); };
 CHG['ch-search'] = el => { S.filter.q = el.value; save(); renderList(true); };
 A['clear-filter'] = () => { Object.assign(S.filter, { q: '', hd: false, fta: false, sat: '', tab: 'all' }); save(); renderList(); };
 A['list-filter'] = el => {
   const f = S.filter;
-  openPop(el, `<h4>${t('Filter channels')}</h4>${mi('flt', 'HD and 4K only', { v: 'hd', checked: f.hd })}${mi('flt', 'Free-to-air only', { v: 'fta', checked: f.fta })}
-    <h4>${t('Satellite')}</h4>${mi('flt-sat', 'All satellites', { v: '', checked: !f.sat })}${S.sats.filter(s => S.channels.some(c => c.sat === s.id)).map(s => mi('flt-sat', s.name, { v: s.id, checked: f.sat === s.id })).join('')}`);
+  openPop(el, `<h4>${t('Filter channels')}</h4>${mi('flt', 'HD and 4K only', { v: 'hd', checked: f.hd })}${mi('flt', 'Free-to-air only', { v: 'fta', checked: f.fta })}`);
 };
 A.flt = el => { const k = el.dataset.v; S.filter[k] = !S.filter[k]; save(); closePop(); renderList(); };
-A['flt-sat'] = el => { S.filter.sat = el.dataset.v; save(); closePop(); renderList(); };
-A['list-menu'] = el => openPop(el, `<h4>${t('Sort by')}</h4>${mi('set-sort', 'Channel number', { v: 'lcn', checked: S.filter.sort === 'lcn' })}${mi('set-sort', 'Name', { v: 'name', checked: S.filter.sort === 'name' })}
-  <h4>${t('Manage')}</h4>${mi('go', 'Channel Manager', { v: 'channels', icon: 'list' })}${mi('customize', 'Customize layout', { icon: 'layout' })}`);
-A['set-sort'] = el => { S.filter.sort = el.dataset.v; save(); closePop(); renderList(); };
+A['list-menu'] = el => openPop(el, `<h4>${t('Manage')}</h4>${mi('go', 'Channel Manager', { v: 'channels', icon: 'list' })}${mi('customize', 'Customize layout', { icon: 'layout' })}`);
 A['toggle-fav'] = el => {
   const c = chById(el.dataset.v);
   c.fav = c.fav.length ? [] : [S.groups[0]?.id || 'g1'];

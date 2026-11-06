@@ -1,5 +1,5 @@
 /* Channel Manager, Program Guide, Recordings */
-const CM = { group: 'all', q: '', sel: new Set() };
+const CM = { group: 'all', q: '', sel: new Set(), sat: '', sort: 'lcn' };
 const chans = () => (NATIVE || hasDevice() ? S.channels : []);
 function cmList() {
   const q = CM.q.trim().toLowerCase();
@@ -9,13 +9,14 @@ function cmList() {
   else if (CM.group === 'hidden') l = l.filter(c => c.hidden);
   else if (CM.group === 'locked') l = l.filter(c => c.locked);
   else if (CM.group !== 'all') l = l.filter(c => c.fav.includes(CM.group));
+  if (CM.sat) l = l.filter(c => c.sat === CM.sat);
   if (q) l = l.filter(c => c.name.toLowerCase().includes(q));
-  return l;
+  return sortChannels(l, CM.sort);
 }
 SCREENS.channels = () => {
   const all = chans(), l = cmList(), n = CM.sel.size;
   const g = (id, label, count, icon) => `<button class="list-item ${CM.group === id ? 'on' : ''}" data-act="cm-group" data-v="${id}">${ic(icon)}<div><b>${esc(t(label))}</b></div><small>${count}</small></button>`;
-  const dragOk = CM.group === 'all' && !CM.q;
+  const dragOk = CM.group === 'all' && !CM.q && !CM.sat && CM.sort === 'lcn';
   return `<div class="page">${pageHead('list', 'Channel Manager', 'Rename, reorder, group, lock and hide your channels. Drag a row to move it.',
     `<button class="btn" data-act="cm-import">${ic('upload')}${t('Import')}</button><button class="btn" data-act="cm-export" ${all.length ? '' : 'disabled'}>${ic('download')}${t('Export')}</button>`)}
     <div class="panes" style="grid-template-columns:236px minmax(0,1fr)">
@@ -28,6 +29,7 @@ SCREENS.channels = () => {
       </div></section>
       <section class="card pane">
         <div class="row"><label class="search" style="flex:1 1 220px">${ic('search')}<input id="cm-q" type="search" value="${esc(CM.q)}" placeholder="${t('Search channels...')}" data-chg="cm-q" aria-label="${t('Search channels...')}"></label>
+          <select class="sel" style="width:210px" id="cm-sat" data-chg="cm-sat" aria-label="${t('Satellite')}">${satOptions(CM.sat)}</select><select class="sel" style="width:170px" id="cm-sort" data-chg="cm-sort" aria-label="${t('Sort by')}">${sortOptions(CM.sort)}</select>
           ${n ? `<span class="sub">${n} ${t('selected')}</span><button class="btn sm" data-act="cm-bulk" data-v="fav">${ic('star')}${t('Add to group')}</button><button class="btn sm" data-act="cm-bulk" data-v="lock">${ic('lock')}${t('Lock')}</button><button class="btn sm" data-act="cm-bulk" data-v="hide">${ic('eyeoff')}${t('Hide')}</button><button class="btn sm danger" data-act="cm-bulk" data-v="del">${ic('trash')}${t('Delete')}</button>` : `<span class="hint">${t(dragOk ? 'Tip: drag rows to reorder.' : 'Open All channels to drag rows.')}</span>`}</div>
         <div class="tbl-wrap">${!all.length ? `<div class="empty">${ic('list')}<b>${t('No channels yet')}</b><span>${t('Scan a satellite or import a saved list.')}</span><button class="btn sm" data-act="go" data-v="scan">${t('Open Transponder Scan')}</button></div>` : `<table class="tbl"><thead><tr><th style="width:30px"><input id="cm-all" type="checkbox" aria-label="${t('Select all')}" data-chg="cm-all" ${n && n === l.length ? 'checked' : ''} style="accent-color:var(--accent)"></th><th></th><th>#</th><th>${t('Name')}</th><th>${t('Type')}</th><th>${t('Satellite')}</th><th>${t('Frequency')}</th><th>${t('Access')}</th><th></th></tr></thead>
         <tbody id="cm-body">${l.map(c => { const tp = tpOf(c), s = satById(c.sat); return `<tr data-id="${c.id}" draggable="${dragOk}" class="${CM.sel.has(c.id) ? 'sel' : ''}"><td><input id="cm-${c.id}" type="checkbox" data-chg="cm-sel" data-v="${c.id}" ${CM.sel.has(c.id) ? 'checked' : ''} aria-label="${esc(c.name)}" style="accent-color:var(--accent)"></td>
@@ -37,6 +39,8 @@ SCREENS.channels = () => {
 };
 A['cm-group'] = el => { CM.group = el.dataset.v; CM.sel.clear(); refresh(); };
 CHG['cm-q'] = el => { CM.q = el.value; const pos = el.selectionStart; refresh(); const i = $('#cm-q'); i.focus(); i.setSelectionRange(pos, pos); };
+CHG['cm-sat'] = el => { CM.sat = el.value; CM.sel.clear(); refresh(); };
+CHG['cm-sort'] = el => { CM.sort = el.value; refresh(); };
 CHG['cm-all'] = el => { CM.sel = new Set(el.checked ? cmList().map(c => c.id) : []); refresh(); };
 CHG['cm-sel'] = el => { el.checked ? CM.sel.add(el.dataset.v) : CM.sel.delete(el.dataset.v); refresh(); };
 A['cm-play'] = el => { go('live'); tune(el.dataset.v); };
