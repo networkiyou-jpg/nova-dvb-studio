@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Net.Http;
+using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -20,12 +21,19 @@ public partial class MainWindow : Window
 {
     private const string StateKey = "app_state", EpgKey = "epg_cache";
     private static readonly string PiconDir = Path.Combine(App.DataDir, "picons");
+    private static readonly string PluginDir = Path.Combine(App.DataDir, "plugins");
     private readonly Store _store = new(Path.Combine(App.DataDir, "nova.db"));
     private readonly EngineClient _engine = new();
     private readonly SystemStats _stats = new();
     private readonly DispatcherTimer _statsTimer = new() { Interval = TimeSpan.FromSeconds(2) };
     private VideoWindow? _video;
     private OsdWindow? _osd;
+    private TsStreamer? _streamer;
+    private LanServer? _remote;
+    private string _remotePin = "";
+    private volatile string _remoteState = "{}";
+    private byte[]? _remotePage;
+    private int _currentSid;
     private TvPlayer? _player;
     private CoreWebView2? _core;
     private static readonly HttpClient Http = CreateHttp();
@@ -43,7 +51,11 @@ public partial class MainWindow : Window
         SizeChanged += (_, _) => _video?.Reposition();
         StateChanged += (_, _) => _video?.Reposition();
         _engine.Event += line => Dispatcher.BeginInvoke(() => Post(line));
-        _engine.TsData += (buf, n) => _player?.Push(buf, n);
+        _engine.TsData += (buf, n) =>
+        {
+            _player?.Push(buf, n);
+            _streamer?.Push(buf, n);
+        };
         _statsTimer.Tick += (_, _) => Post(_stats.Read(App.DataDir));
     }
 
@@ -133,7 +145,9 @@ public partial class MainWindow : Window
                 _player?.SetWindowSize((int)(double)m["w"]!, (int)(double)m["h"]!);
                 break;
             case "play":
-                _player?.Play((int)m["sid"]!);
+                _currentSid = (int)m["sid"]!;
+                _streamer?.SetService(_currentSid);
+                _player?.Play(_currentSid);
                 _player?.SetVolume(_volume);
                 _player?.SetMute(_muted);
                 break;
@@ -208,7 +222,32 @@ public partial class MainWindow : Window
                 OpenUrl((string?)m["url"]);
                 break;
             case "openFolder":
-                Process.Start("explorer.exe", (string?)m["key"] == "picons" ? PiconDir : App.DataDir);
+                var folder = (string?)m["key"] switch { "picons" => PiconDir, "plugins" => PluginDir, _ => App.DataDir };
+                Directory.CreateDirectory(folder);
+                Process.Start("explorer.exe", folder);
+                break;
+            case "pluginsList":
+                ListPlugins();
+                break;
+            case "pluginInstall":
+                InstallPlugin(m);
+                break;
+            case "pluginRemove":
+                var dir = Path.Combine(PluginDir, SafeId((string?)m["dir"] ?? ""));
+                if (dir != PluginDir && Directory.Exists(dir)) Directory.Delete(dir, true);
+                ListPlugins();
+                break;
+            case "pluginExec":
+                _ = ExecAsync(m);
+                break;
+            case "serverStream":
+                ServerStream(m);
+                break;
+            case "serverRemote":
+                ServerRemote(m);
+                break;
+            case "remoteState":
+                _remoteState = m["state"]?.ToJsonString() ?? "{}";
                 break;
             case "saveFile":
                 SaveFile((string)m["name"]!, (string)m["text"]!);
@@ -258,7 +297,7 @@ public partial class MainWindow : Window
     private static HttpClient CreateHttp()
     {
         var http = new HttpClient { Timeout = TimeSpan.FromSeconds(60) };
-        http.DefaultRequestHeaders.UserAgent.ParseAdd("NOVA-DVB-Studio/0.2");
+        http.DefaultRequestHeaders.UserAgent.ParseAdd("NOVA-DVB-Studio/0.3");
         return http;
     }
 
@@ -379,6 +418,201 @@ public partial class MainWindow : Window
         Process.Start(new ProcessStartInfo(u.AbsoluteUri) { UseShellExecute = true });
     }
 
+    // ---------- Plugins ----------
+
+    private static string SafeId(string id)
+    {
+        var sb = new StringBuilder();
+        foreach (var c in id.ToLowerInvariant())
+            if (c is >= 'a' and <= 'z' or >= '0' and <= '9' or '-' or '_' or '.') sb.Append(c);
+        var s = sb.ToString().Trim('.');
+        return s.Length > 60 ? s[..60] : s;
+    }
+
+    /// <summary>
+    /// Plugins live in %LOCALAPPDATA%\NOVA DVB Studio\plugins, one folder each with plugin.json and main.js.
+    /// The interface runs them; this only reads the files. A guide is placed in the folder the first time.
+    /// </summary>
+    private void ListPlugins()
+    {
+        Directory.CreateDirectory(PluginDir);
+        var guide = Path.Combine(AppContext.BaseDirectory, "wwwroot", "plugins-guide.md");
+        var readme = Path.Combine(PluginDir, "README.md");
+        if (File.Exists(guide) && !File.Exists(readme)) File.Copy(guide, readme);
+        var list = new JsonArray();
+        foreach (var dir in Directory.GetDirectories(PluginDir))
+        {
+            var name = Path.GetFileName(dir);
+            var manifest = Path.Combine(dir, "plugin.json");
+            if (name.StartsWith('.') || !File.Exists(manifest)) continue;
+            var main = Path.Combine(dir, "main.js");
+            list.Add(new JsonObject
+            {
+                ["dir"] = name,
+                ["manifest"] = File.ReadAllText(manifest),
+                ["code"] = File.Exists(main) ? File.ReadAllText(main) : "",
+            });
+        }
+        Post(new JsonObject { ["evt"] = "plugins", ["list"] = list, ["folder"] = PluginDir }.ToJsonString());
+    }
+
+    /// <summary>Unpacks a plugin .zip (plugin.json at the top or in one folder) into the plugin folder.</summary>
+    private void InstallPlugin(JsonObject m)
+    {
+        var reply = new JsonObject { ["evt"] = "pluginInstalled", ["id"] = (string?)m["id"], ["ok"] = false };
+        Directory.CreateDirectory(PluginDir);
+        var tmp = Path.Combine(PluginDir, ".incoming-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            using (var zip = new ZipArchive(new MemoryStream(Convert.FromBase64String((string)m["b64"]!)), ZipArchiveMode.Read))
+                zip.ExtractToDirectory(tmp, true);
+            var root = File.Exists(Path.Combine(tmp, "plugin.json"))
+                ? tmp
+                : Directory.GetDirectories(tmp).FirstOrDefault(d => File.Exists(Path.Combine(d, "plugin.json")));
+            if (root is null) throw new InvalidDataException("The archive has no plugin.json");
+            var id = SafeId((string?)JsonNode.Parse(File.ReadAllText(Path.Combine(root, "plugin.json")))?["id"] ?? "");
+            if (id.Length == 0) throw new InvalidDataException("plugin.json has no id");
+            var target = Path.Combine(PluginDir, id);
+            if (Directory.Exists(target)) Directory.Delete(target, true);
+            Directory.Move(root, target);
+            reply["ok"] = true;
+            reply["dir"] = id;
+        }
+        catch (Exception ex) when (ex is IOException or InvalidDataException or FormatException or JsonException or UnauthorizedAccessException or InvalidOperationException)
+        {
+            reply["error"] = ex.Message;
+        }
+        finally
+        {
+            try { if (Directory.Exists(tmp)) Directory.Delete(tmp, true); }
+            catch (IOException) { /* left for the next start */ }
+        }
+        Post(reply.ToJsonString());
+        ListPlugins();
+    }
+
+    /// <summary>Runs a program for a plugin that has the "exec" permission, without a shell, and reports its exit code.</summary>
+    private async Task ExecAsync(JsonObject m)
+    {
+        var reply = new JsonObject { ["evt"] = "pluginExecDone", ["id"] = (string?)m["id"], ["ok"] = false };
+        try
+        {
+            var psi = new ProcessStartInfo((string)m["file"]!)
+            {
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+            };
+            foreach (var a in (m["args"] as JsonArray) ?? new JsonArray()) psi.ArgumentList.Add((string?)a ?? "");
+            using var p = Process.Start(psi) ?? throw new InvalidOperationException("The program did not start");
+            var stdout = p.StandardOutput.ReadToEndAsync();
+            var stderr = p.StandardError.ReadToEndAsync();
+            using var limit = new CancellationTokenSource(TimeSpan.FromHours(6));
+            await p.WaitForExitAsync(limit.Token);
+            var text = await stdout + await stderr;
+            reply["ok"] = true;
+            reply["code"] = p.ExitCode;
+            reply["out"] = text.Length > 4000 ? text[^4000..] : text;
+        }
+        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException or IOException or OperationCanceledException)
+        {
+            reply["error"] = ex.Message;
+        }
+        Post(reply.ToJsonString());
+    }
+
+    private static JsonArray Urls(int port, string path)
+    {
+        var list = new JsonArray();
+        foreach (var ip in LanServer.LocalAddresses()) list.Add($"http://{ip}:{port}{path}");
+        return list;
+    }
+
+    /// <summary>Starts or stops the network stream (/live.ts and /transponder.ts).</summary>
+    private void ServerStream(JsonObject m)
+    {
+        var reply = new JsonObject { ["evt"] = "serverStatus", ["id"] = (string?)m["id"], ["ok"] = true };
+        _streamer?.Dispose();
+        _streamer = null;
+        if ((bool?)m["on"] == true)
+        {
+            int port = (int?)m["port"] ?? 8001;
+            try
+            {
+                var streamer = new TsStreamer(port);
+                if (_currentSid > 0) streamer.SetService(_currentSid);
+                _streamer = streamer;
+                reply["urls"] = Urls(port, "/live.ts");
+                reply["whole"] = Urls(port, "/transponder.ts");
+            }
+            catch (SocketException ex)
+            {
+                reply["ok"] = false;
+                reply["error"] = ex.Message;
+            }
+        }
+        Post(reply.ToJsonString());
+    }
+
+    /// <summary>Starts or stops the phone remote: a small web page plus /api/state and /api/cmd, guarded by a PIN.</summary>
+    private void ServerRemote(JsonObject m)
+    {
+        var reply = new JsonObject { ["evt"] = "serverStatus", ["id"] = (string?)m["id"], ["ok"] = true };
+        _remote?.Dispose();
+        _remote = null;
+        if ((bool?)m["on"] == true)
+        {
+            int port = (int?)m["port"] ?? 8080;
+            _remotePin = (string?)m["pin"] ?? "";
+            try
+            {
+                _remote = new LanServer(port, RemoteHandle);
+                reply["urls"] = Urls(port, "/");
+            }
+            catch (SocketException ex)
+            {
+                reply["ok"] = false;
+                reply["error"] = ex.Message;
+            }
+        }
+        Post(reply.ToJsonString());
+    }
+
+    private async Task RemoteHandle(LanRequest req, Stream s, CancellationToken ct)
+    {
+        if (req.Path is "/" or "/index.html")
+        {
+            _remotePage ??= File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "wwwroot", "remote", "index.html"));
+            await LanServer.Reply(s, 200, "text/html; charset=utf-8", _remotePage, ct);
+            return;
+        }
+        if (!req.Query.TryGetValue("pin", out var pin) || _remotePin.Length == 0 || pin != _remotePin)
+        {
+            await LanServer.Reply(s, 403, "application/json", "{\"error\":\"pin\"}", ct);
+            return;
+        }
+        if (req.Path == "/api/state")
+        {
+            await LanServer.Reply(s, 200, "application/json; charset=utf-8", _remoteState, ct);
+            return;
+        }
+        if (req.Path == "/api/cmd" && req.Method == "POST")
+        {
+            JsonNode? cmd = null;
+            try { cmd = JsonNode.Parse(req.Body); }
+            catch (JsonException) { /* ignored below */ }
+            if (cmd is JsonObject o)
+            {
+                var msg = new JsonObject { ["evt"] = "remoteCmd", ["act"] = o["act"]?.ToString(), ["v"] = o["v"]?.DeepClone() }.ToJsonString();
+                await Dispatcher.InvokeAsync(() => Post(msg));
+            }
+            await LanServer.Reply(s, 204, "text/plain", Array.Empty<byte>(), ct);
+            return;
+        }
+        await LanServer.Reply(s, 404, "text/plain", "Not found", ct);
+    }
+
     /// <summary>Audio, subtitle and teletext buttons on the info bar, or their keyboard shortcuts.</summary>
     private void OnTrackAction(string act)
     {
@@ -411,6 +645,8 @@ public partial class MainWindow : Window
     private void Shutdown()
     {
         _statsTimer.Stop();
+        _streamer?.Dispose();
+        _remote?.Dispose();
         try { _osd?.Close(); }
         catch (InvalidOperationException) { /* already closed with the video window */ }
         _player?.Dispose();

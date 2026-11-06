@@ -111,7 +111,7 @@ function seedState() {
       epgSource: 'Broadcast (EIT)', epgDays: 7, epgUpdate: 'While tuned', epgUrl: '',
       piconFolder: 'C:\\ProgramData\\NOVA\\Picons', piconFormat: 'PNG and SVG',
       piconSource: 'picons', piconBase: 'https://raw.githubusercontent.com/picons/picons/master/build-source/', piconCustom: '', piconStyle: 'default', piconAuto: true,
-      osdZap: true, osdSec: '5', osdSize: 'normal', osdMouse: true, epgLang: 'ara,eng,fre,fra',
+      osdZap: true, osdSec: '5', osdSize: 'compact', osdSizeV: 2, osdMouse: true, epgLang: 'ara,eng,fre,fra',
       dbPath: 'C:\\ProgramData\\NOVA\\nova.db', logDays: 14, logLevel: 'Information', camEncrypt: true, camAuto: false, bissEncrypt: true, updateCheck: true,
     },
   };

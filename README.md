@@ -16,6 +16,17 @@ Satellite TV for Windows 10 and 11 (64-bit).
 
 The GitHub workflow builds, tests and produces `NOVA-DVB-Studio-Setup`. See `docs/first-test-tbs6902.md`.
 
+## Version 0.3.0
+
+- **Plugins**: a plugins folder (`%LOCALAPPDATA%\NOVA DVB Studio\plugins`), turned on and off in
+  Settings, Plugins. Each plugin declares permissions; NOVA asks before turning on one that runs programs
+  or accepts network connections. Guide for writing one: `docs/plugins.md` (also placed in the folder).
+- Built-in plugins: **Extra guide sources** (XMLTV), **Stream to the network** (`/live.ts` with only the
+  channel on screen, `/transponder.ts`), **Phone remote** (web page with PIN), **After recording**
+  (MP4 copy with FFmpeg, or your own program).
+- The info bar is smaller: by default under half the picture width. Sizes: small, medium, large.
+- The installer allows NOVA through Windows Firewall on private networks.
+
 ## Version 0.2.0
 
 - **Info bar** over the picture on every channel change: logo, number and name, clock and date, now and

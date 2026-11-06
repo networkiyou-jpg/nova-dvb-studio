@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b0f24">
+<title>NOVA Remote</title>
+<style>
+  :root { --bg: #090d20; --card: #141a36; --line: rgba(255,255,255,.1); --fg: #eef1fb; --fg2: #9aa4c4; --accent: #7868f0; --accent2: #28b8ff; --red: #ff5a6a; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body { margin: 0; min-height: 100vh; background: radial-gradient(120% 60% at 50% 0%, #1d1850, var(--bg) 60%); color: var(--fg); font: 15px/1.4 system-ui, "Segoe UI", Roboto, "Noto Sans Arabic", sans-serif; padding: 16px 16px calc(16px + env(safe-area-inset-bottom)); }
+  h1 { font-size: 17px; margin: 0; letter-spacing: .02em; } h1 b { background: linear-gradient(90deg, var(--accent), var(--accent2)); -webkit-background-clip: text; color: transparent; }
+  .top { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; } .sp { flex: 1; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--fg2); } .dot.ok { background: #3ddc84; box-shadow: 0 0 8px #3ddc84; }
+  .now { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 14px; margin-bottom: 14px; }
+  .now small { color: var(--fg2); display: block; } .now b { font-size: 19px; display: block; margin: 2px 0; } .now .rec { color: var(--red); font-weight: 700; }
+  .pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
+  button { font: inherit; color: inherit; border: 1px solid var(--line); background: var(--card); border-radius: 14px; min-height: 58px; padding: 8px; cursor: pointer; }
+  button:active { transform: scale(.97); background: #1f2750; }
+  .big { font-size: 22px; font-weight: 700; } .accent { background: linear-gradient(135deg, var(--accent), #4d3fd0); border: 0; } .red { color: var(--red); }
+  .vol { display: flex; align-items: center; gap: 10px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 10px 14px; margin-bottom: 14px; }
+  input[type=range] { flex: 1; accent-color: var(--accent); } input[type=search], input[type=password] { width: 100%; font: inherit; color: var(--fg); background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px; }
+  .list { display: grid; gap: 6px; margin-top: 10px; }
+  .ch { display: flex; gap: 10px; align-items: center; text-align: start; min-height: 48px; } .ch i { font-style: normal; color: var(--fg2); min-width: 32px; } .ch.on { border-color: var(--accent); background: #221d55; }
+  .pinbox { max-width: 340px; margin: 18vh auto 0; display: grid; gap: 12px; text-align: center; } .err { color: var(--red); min-height: 1.4em; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<section id="login" class="pinbox" hidden>
+  <h1><b>NOVA</b> Remote</h1>
+  <p>Enter the PIN shown in NOVA, Settings, Plugins, Phone remote.</p>
+  <input id="pin" type="password" inputmode="numeric" maxlength="8" placeholder="PIN" aria-label="PIN">
+  <button class="accent big" id="go">OK</button>
+  <div class="err" id="err"></div>
+</section>
+<main id="app" hidden>
+  <div class="top"><h1><b>NOVA</b> Remote</h1><span class="sp"></span><span class="dot" id="dot"></span></div>
+  <div class="now"><small id="num">—</small><b id="name">—</b><span id="prog"></span> <span class="rec" id="rec" hidden>● REC</span></div>
+  <div class="pad">
+    <button data-a="mute" aria-label="Mute">🔇</button><button class="big" data-a="up" aria-label="Channel up">▲</button><button data-a="info" aria-label="Info bar">ⓘ</button>
+    <button class="red" data-a="record" aria-label="Record">● REC</button><button class="big" data-a="down" aria-label="Channel down">▼</button><button data-a="list" aria-label="Channel list">☰</button>
+  </div>
+  <div class="vol"><span>🔉</span><input id="vol" type="range" min="0" max="100" aria-label="Volume"><span id="volv">—</span></div>
+  <div id="chans" hidden>
+    <input id="q" type="search" placeholder="Search channels" aria-label="Search channels">
+    <div class="list" id="list"></div>
+  </div>
+</main>
+<script>
+  const $ = id => document.getElementById(id);
+  let pin = '';
+  let st = null, listOpen = false, volTimer = 0;
+  try { pin = localStorage.getItem('nova-pin') || ''; } catch (e) { /* private mode */ }
+  const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  async function api(path, body) {
+    const r = await fetch(`${path}?pin=${encodeURIComponent(pin)}`, body ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : {});
+    if (r.status === 403) throw new Error('pin');
+    if (!r.ok) throw new Error('http');
+    return r.status === 204 ? null : r.json();
+  }
+  const send = (act, v) => api('/api/cmd', { act, v }).then(() => setTimeout(poll, 350)).catch(onErr);
+  function onErr(e) {
+    $('dot').classList.remove('ok');
+    if (e.message === 'pin') { $('app').hidden = true; $('login').hidden = false; $('err').textContent = pin ? 'Wrong PIN' : ''; }
+  }
+  function draw() {
+    if (!st) return;
+    const c = st.channel;
+    $('num').textContent = c ? String(c.number).padStart(3, '0') : '—';
+    $('name').textContent = c ? c.name : 'No channel';
+    $('prog').textContent = st.now || '';
+    $('rec').hidden = !st.recording;
+    if (document.activeElement !== $('vol')) $('vol').value = st.volume ?? 0;
+    $('volv').textContent = st.muted ? 'mute' : `${st.volume ?? 0}`;
+    if (listOpen) drawList();
+  }
+  function drawList() {
+    const q = $('q').value.trim().toLowerCase();
+    const cur = st?.channel?.id;
+    $('list').innerHTML = (st?.channels || []).filter(c => !q || c.name.toLowerCase().includes(q) || String(c.number) === q).slice(0, 200)
+      .map(c => `<button class="ch ${c.id === cur ? 'on' : ''}" data-ch="${esc(c.id)}"><i>${esc(c.number)}</i><span>${esc(c.name)}</span></button>`).join('');
+  }
+  async function poll() {
+    try { st = await api('/api/state'); $('dot').classList.add('ok'); $('login').hidden = true; $('app').hidden = false; draw(); }
+    catch (e) { onErr(e); }
+  }
+  document.addEventListener('click', e => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    if (b.id === 'go') { pin = $('pin').value.trim(); try { localStorage.setItem('nova-pin', pin); } catch (x) { /* private mode */ } poll(); return; }
+    if (b.dataset.ch) { send('tune', b.dataset.ch); return; }
+    if (b.dataset.a === 'list') { listOpen = !listOpen; $('chans').hidden = !listOpen; if (listOpen) drawList(); return; }
+    if (b.dataset.a) send(b.dataset.a);
+  });
+  $('vol').addEventListener('input', e => { clearTimeout(volTimer); volTimer = setTimeout(() => send('volume', Number(e.target.value)), 150); });
+  $('q').addEventListener('input', drawList);
+  if (pin) poll(); else $('login').hidden = false;
+  setInterval(() => { if (!$('app').hidden) poll(); }, 2000);
+</script>
+</body>
+</html>

@@ -1,7 +1,7 @@
 ; NOVA DVB Studio installer. Built by the GitHub workflow with Inno Setup.
 #define AppVersion GetEnv("NOVA_VERSION")
 #if AppVersion == ""
-  #define AppVersion "0.2.0"
+  #define AppVersion "0.3.0"
 #endif
 
 [Setup]
@@ -35,6 +35,12 @@ Name: "{group}\Uninstall NOVA DVB Studio"; Filename: "{uninstallexe}"
 Name: "{autodesktop}\NOVA DVB Studio"; Filename: "{app}\NOVADVBStudio.exe"; Tasks: desktopicon
 
 [Run]
+; Plugins that stream to the network or serve the phone remote need incoming connections on the local network.
+Filename: "{sys}\netsh.exe"; Parameters: "advfirewall firewall delete rule name=""NOVA DVB Studio"""; Flags: runhidden
+Filename: "{sys}\netsh.exe"; Parameters: "advfirewall firewall add rule name=""NOVA DVB Studio"" dir=in action=allow program=""{app}\NOVADVBStudio.exe"" profile=private enable=yes"; Flags: runhidden
 Filename: "{app}\NOVADVBStudio.exe"; Description: "Start NOVA DVB Studio"; Flags: nowait postinstall skipifsilent
+
+[UninstallRun]
+Filename: "{sys}\netsh.exe"; Parameters: "advfirewall firewall delete rule name=""NOVA DVB Studio"""; Flags: runhidden; RunOnceId: "NovaFirewall"
 
 ; User data lives in %LOCALAPPDATA%\NOVA DVB Studio, so updates and uninstalling keep channels and settings.

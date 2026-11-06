@@ -4,6 +4,8 @@
    In the browser it is drawn in HTML. In the Windows app the picture is a native window, so the same
    ready-made data goes to a transparent window that sits on top of it (OsdWindow.cs). */
 const IB = { until: 0, pinned: false, timer: 0, last: '' };
+/* Version 0.2.1 made the bar smaller: older saved settings move to the new compact size once. */
+if (S.settings.osdSizeV !== 2) { S.settings.osdSize = 'compact'; S.settings.osdSizeV = 2; }
 const pad3 = n => String(n ?? '').padStart(3, '0');
 const resOf = ch => (ch?.res || '').split(/\s*[x\u00d7]\s*/).map(Number);
 function qualityOf(ch) {
@@ -47,7 +49,7 @@ function infobarData(ch = curCh()) {
   if (q) badges.push({ t: q, k: 'q' });
   if (ch.vcodec) badges.push({ t: ch.vcodec, k: '' });
   if (w && h && q !== 'SD' && aspectOf(w, h)) badges.push({ t: aspectOf(w, h), k: '' });
-  if (w && h) badges.push({ t: `${w}\u00d7${h}`, k: 'res' });
+  if (w && h && (S.settings.osdSize || 'compact') !== 'compact') badges.push({ t: `${w}\u00d7${h}`, k: 'res' });   /* the small bar keeps room for the name */
   const sg = ibSignal();
   const audioLang = ch.audio?.[S.player.audio] ?? ch.audio?.[0];
   return {
@@ -64,7 +66,7 @@ function infobarData(ch = curCh()) {
     sub: { label: t('SUB'), sub: ch.subs?.length ? `${ch.subs.length}` : '', on: !!ch.subs?.length },
     txt: { label: t('TXT'), sub: '', on: !!ch.txt },
     picon: { src: S.picons[ch.id] && S.picons[ch.id] !== 'auto' ? S.picons[ch.id] : '', code: ch.code, num: ch.num || '', c1: ch.p1, c2: ch.p2 },
-    accent: cssVar('--accent'), accent2: cssVar('--accent-2'),
+    accent: cssVar('--accent'), accent2: cssVar('--accent-2'), size: S.settings.osdSize || 'compact',
   };
 }
 
@@ -111,7 +113,7 @@ function ibRender() {
   if (!el) { el = document.createElement('div'); el.id = 'ib'; el.className = 'ib-wrap'; el.setAttribute('role', 'status'); stage.append(el); }
   stage.classList.toggle('ib-on', !!d);
   el.classList.toggle('show', !!d);
-  el.dataset.size = S.settings.osdSize || 'normal';
+  el.dataset.size = S.settings.osdSize || 'compact';
   if (d) el.innerHTML = `<div class="ib" dir="ltr">${infobarHTML(d)}</div>`;
 }
 function ibShow(sec) {

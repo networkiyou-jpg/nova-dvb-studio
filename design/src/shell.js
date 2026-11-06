@@ -55,7 +55,7 @@ function renderChrome() {
       <button class="x" data-act="win-close" aria-label="${t('Close')}" data-tip="${t('Close')}">${ic('x')}</button>
     </div><div class="clock ltr" id="clock"></div><div class="date" id="date"></div></div>`;
   $('#side').innerHTML = `<nav class="side-nav" aria-label="${t('Sections')}">${SIDE.map(([v, i, l]) => `<button data-act="go" data-v="${v}" ${S.view === v ? 'aria-current="page"' : ''} data-tip="${t(l)}">${ic(i)}<span>${t(l)}</span>${ic('chev', 'chev')}</button>`).join('')}</nav>
-    <div class="side-foot">${DISH}<b>NOVA DVB Studio</b><small>v0.2.0 &nbsp;•&nbsp; ${t('Professional Edition')}</small></div>`;
+    <div class="side-foot">${DISH}<b>NOVA DVB Studio</b><small>v0.3.0 &nbsp;•&nbsp; ${t('Professional Edition')}</small></div>`;
   renderStatus();
   tickClock();
 }

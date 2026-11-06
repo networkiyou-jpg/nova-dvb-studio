@@ -722,10 +722,12 @@ table.tbl { width: 100%; border-collapse: separate; border-spacing: 0; font-size
 
 /* ---------- Info bar over the picture ---------- */
 .stage { container-type: inline-size; }
-.ib-wrap { position: absolute; inset-inline: 1.4cqw; bottom: calc(56px + .6cqw); z-index: 3; font-size: clamp(5.5px, .9cqw, 16px); opacity: 0; transform: translateY(14px); transition: opacity .22s, transform .22s; pointer-events: none; }
-.ib-wrap[data-size="compact"] { font-size: clamp(5px, .74cqw, 13px); }
-.ib-wrap[data-size="large"] { font-size: clamp(6px, 1.04cqw, 18px); }
-.ib-wrap.show { opacity: 1; transform: none; }
+/* The bar is sized in em; its width follows the font size, so each size keeps the same proportions.
+   Compact takes under half the picture width and about a fifth of its height. */
+.ib-wrap { position: absolute; left: 50%; bottom: calc(56px + .8cqw); z-index: 3; width: min(96cqw, 106em); font-size: clamp(5.4px, .44cqw, 11px); opacity: 0; transform: translate(-50%, 14px); transition: opacity .22s, transform .22s; pointer-events: none; }
+.ib-wrap[data-size="normal"] { font-size: clamp(5.6px, .57cqw, 14px); }
+.ib-wrap[data-size="large"] { font-size: clamp(6px, .74cqw, 17px); }
+.ib-wrap.show { opacity: 1; transform: translate(-50%, 0); }
 .ib-wrap.show .ib-btn { pointer-events: auto; }
 .stage.ib-on .osd-tl { opacity: 0; transition: opacity .2s; }
 .ib { position: relative; display: grid; grid-template-columns: 19em 1.3em minmax(0, 1fr); grid-template-rows: 5.6em .5em 8.4em .6em 3.8em .7em 3em; padding: 1em 1.5em .9em 1.1em; border-radius: 1.9em; color: #fff; font-family: var(--font-display), var(--font-ar);
@@ -800,7 +802,26 @@ button.link:hover { color: var(--fg); }
 .pf-cell:hover { box-shadow: inset 0 0 0 1px var(--edge-a); color: var(--fg); }
 .pf-cell img { width: 100px; height: 60px; object-fit: contain; }
 .pf-cell span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-@container (max-width: 820px) { .ib-badge.res, .ib-clock > span { display: none; } }
+@container (max-width: 1100px) { .ib-badge.res { display: none; } }
+
+/* ---------- Plugins ---------- */
+.plugs { display: grid; gap: 10px; }
+.plug { display: grid; gap: 10px; padding: 14px; border-radius: var(--r-card, 14px); background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--line); }
+.plug.on { box-shadow: inset 0 0 0 1px var(--edge-a), 0 0 14px color-mix(in srgb, var(--accent) 18%, transparent); }
+.plug.broken { opacity: .8; }
+.plug-h { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.plug-ic { width: 38px; height: 38px; flex: none; display: grid; place-items: center; border-radius: 10px; background: var(--grad-soft); box-shadow: inset 0 0 0 1px var(--edge-a); color: var(--accent-2); font-size: 19px; }
+.plug-id { display: grid; min-width: 0; } .plug-id b { font-size: 14.5px; } .plug-id small { color: var(--fg-3); font-size: 12px; }
+.perms { display: flex; flex-wrap: wrap; gap: 6px; }
+.perm { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding-inline: 8px; border-radius: 12px; font-size: 11.5px; color: var(--fg-2); background: var(--surface-3); }
+.perm.risky { color: #ffc35a; background: rgba(255, 180, 60, .12); box-shadow: inset 0 0 0 1px rgba(255, 180, 60, .3); }
+.plug-err { display: flex; gap: 8px; align-items: flex-start; padding: 8px 10px; border-radius: 8px; color: #ff9aa4; background: rgba(255, 90, 106, .1); font-size: 12.5px; }
+.plug-body { display: grid; gap: 4px; padding-top: 4px; border-top: 1px solid var(--line); }
+.plug-status, .plug-log { margin: 0; padding: 10px; border-radius: 8px; background: rgba(0, 0, 0, .28); font: 12.5px/1.5 ui-monospace, Consolas, monospace; white-space: pre-wrap; word-break: break-all; color: var(--fg-2); user-select: text; }
+.plug-status { color: var(--fg); }
+.plug-foot summary { cursor: pointer; color: var(--fg-3); font-size: 12px; }
+.plug-foot details[open] { width: 100%; }
+.field-ta { width: 100%; min-height: 64px; resize: vertical; font: 12.5px/1.5 ui-monospace, Consolas, monospace; color: var(--fg); background: var(--surface-1, #10152e); border: 1px solid var(--line-2); border-radius: var(--r-ctl); padding: 8px 10px; }
 
 </style>
 <div class="backdrop" aria-hidden="true"></div>
@@ -931,7 +952,7 @@ function seedState() {
       epgSource: 'Broadcast (EIT)', epgDays: 7, epgUpdate: 'While tuned', epgUrl: '',
       piconFolder: 'C:\\ProgramData\\NOVA\\Picons', piconFormat: 'PNG and SVG',
       piconSource: 'picons', piconBase: 'https://raw.githubusercontent.com/picons/picons/master/build-source/', piconCustom: '', piconStyle: 'default', piconAuto: true,
-      osdZap: true, osdSec: '5', osdSize: 'normal', osdMouse: true, epgLang: 'ara,eng,fre,fra',
+      osdZap: true, osdSec: '5', osdSize: 'compact', osdSizeV: 2, osdMouse: true, epgLang: 'ara,eng,fre,fra',
       dbPath: 'C:\\ProgramData\\NOVA\\nova.db', logDays: 14, logLevel: 'Information', camEncrypt: true, camAuto: false, bissEncrypt: true, updateCheck: true,
     },
   };
@@ -1016,6 +1037,39 @@ Object.assign(AR, {
   'Loading the logo index': 'جارٍ تحميل فهرس الشعارات', 'Type at least two letters.': 'اكتب حرفين على الأقل.', 'No logos match': 'لا توجد شعارات مطابقة', 'Find a logo': 'البحث عن شعار', 'Search logos': 'ابحث في الشعارات',
   'That logo could not be downloaded.': 'تعذر تنزيل هذا الشعار.', 'your own server': 'خادمك الخاص', 'Logo settings': 'إعدادات الشعارات', 'Downloading logos': 'جارٍ تنزيل الشعارات',
   'Channel logos from the internet or from your own files. PNG and SVG, transparent backgrounds supported.': 'شعارات القنوات من الإنترنت أو من ملفاتك. يدعم PNG وSVG والخلفيات الشفافة.',
+});
+
+/* Arabic text for plugins and the smaller info bar. */
+Object.assign(AR, {
+  'Plugins': 'الإضافات', 'Small': 'صغير', 'Medium': 'متوسط', 'Small covers under half the picture width.': 'الصغير يغطي أقل من نصف عرض الصورة.',
+  'Read your channel list': 'قراءة قائمة القنوات', 'Change channel, volume and recording': 'تغيير القناة والصوت والتسجيل', 'Add programs to the guide': 'إضافة برامج إلى الدليل',
+  'Download from the internet': 'التنزيل من الإنترنت', 'Read your recordings': 'قراءة تسجيلاتك', 'Accept connections from your home network': 'قبول اتصالات من شبكة المنزل',
+  'Run programs on this computer': 'تشغيل برامج على هذا الحاسوب', 'Error': 'خطأ', 'Started': 'بدأت', 'Stopped': 'توقفت',
+  'This plugin has no permission for': 'ليس لهذه الإضافة إذن', 'This works in the Windows app.': 'يعمل هذا في تطبيق Windows.', 'No such channel': 'لا توجد قناة بهذا المعرف',
+  'Only http and https addresses are allowed': 'العناوين المسموحة http وhttps فقط', 'Download failed': 'فشل التنزيل', 'The program did not start': 'لم يبدأ البرنامج',
+  'The port could not be opened': 'تعذر فتح المنفذ', 'Built-in': 'مدمجة', 'From the plugins folder': 'من مجلد الإضافات', 'Turn on': 'تشغيل',
+  'Activity': 'النشاط', 'Remove': 'إزالة', 'Plugins add features to NOVA. Each one asks only for what it needs, and stays off until you turn it on.': 'الإضافات تزيد ميزات NOVA. كل إضافة تطلب فقط ما تحتاجه، وتبقى متوقفة حتى تشغّلها.',
+  'Install plugin (.zip)': 'تثبيت إضافة (.zip)', 'Open plugins folder': 'فتح مجلد الإضافات', 'Reload plugins': 'إعادة تحميل الإضافات', 'Plugins from a folder load in the Windows app.': 'إضافات المجلد تُحمّل في تطبيق Windows.',
+  'How to write a plugin': 'كيف تكتب إضافة', 'No plugins': 'لا توجد إضافات', 'This plugin asks to': 'هذه الإضافة تطلب', 'It comes with NOVA.': 'وهي مدمجة مع NOVA.',
+  'Turn it on only if you trust where it came from.': 'شغّلها فقط إن كنت تثق في مصدرها.', 'Turn the plugin on first.': 'شغّل الإضافة أولاً.', 'Plugins reloaded': 'تمت إعادة تحميل الإضافات',
+  'Remove this plugin?': 'إزالة هذه الإضافة؟', 'Its folder is deleted. Its settings are kept in case you install it again.': 'يُحذف مجلدها، وتبقى إعداداتها إن ثبّتّها من جديد.',
+  'That file is too large for a plugin.': 'هذا الملف كبير جداً لإضافة.', 'Plugin installed': 'تم تثبيت الإضافة', 'Turn it on below.': 'شغّلها من القائمة.', 'The plugin could not be installed': 'تعذر تثبيت الإضافة',
+  'Make a folder in the plugins folder with two files. NOVA lists it after Reload plugins.': 'أنشئ مجلداً داخل مجلد الإضافات فيه ملفان. يظهر في NOVA بعد إعادة تحميل الإضافات.',
+  'Permissions': 'الأذونات', 'The full list of functions is in README.md in the plugins folder.': 'القائمة الكاملة للدوال في README.md داخل مجلد الإضافات.',
+  'plugin.json needs an id of lower-case letters, digits, dots or dashes': 'يحتاج plugin.json إلى معرف من حروف صغيرة وأرقام ونقاط وشرطات', 'plugin.json needs a name': 'يحتاج plugin.json إلى اسم',
+  'Extra guide sources': 'مصادر دليل إضافية', 'Adds programs from one or more XMLTV addresses to the guide, next to the broadcast listings, and refreshes them on a schedule.': 'تضيف برامج من عنوان XMLTV أو أكثر إلى الدليل بجانب برامج البث، وتحدّثها بانتظام.',
+  'XMLTV addresses': 'عناوين XMLTV', 'One address per line. Gzip files work too. Use sources you are allowed to use.': 'عنوان في كل سطر. ملفات Gzip مدعومة. استخدم مصادر مسموحاً لك بها.',
+  'Refresh every': 'التحديث كل', '6 hours': '6 ساعات', '12 hours': '12 ساعة', '24 hours': '24 ساعة', 'Only when I ask': 'عند الطلب فقط', 'Load now': 'تحميل الآن', 'Add at least one address.': 'أضف عنواناً واحداً على الأقل.',
+  'Stream to the network': 'البث إلى الشبكة', 'Sends the channel on screen to other devices at home. Open the address in VLC, Kodi or a TV app. The transponder address carries every channel on it.': 'ترسل القناة المعروضة إلى أجهزة أخرى في المنزل. افتح العنوان في VLC أو Kodi أو تطبيق التلفاز. عنوان التردد يحمل كل قنواته.',
+  'Port': 'المنفذ', 'Change it if another program uses this port.': 'غيّره إن كان برنامج آخر يستخدم هذا المنفذ.', 'Restart the stream': 'إعادة تشغيل البث', 'Channel on screen': 'القناة المعروضة', 'Whole transponder': 'التردد كاملاً',
+  'Phone remote': 'التحكم من الهاتف', 'Control NOVA from a phone on the same network: channel list, up and down, volume, info bar and recording. The phone needs the PIN shown here.': 'تحكّم في NOVA من هاتف على الشبكة نفسها: قائمة القنوات، التالي والسابق، الصوت، شريط المعلومات والتسجيل. يحتاج الهاتف إلى الرمز الظاهر هنا.',
+  'Four to eight digits. A new one is made when empty.': 'من أربعة إلى ثمانية أرقام. يُنشأ رمز جديد إن ترك فارغاً.', 'Restart the remote': 'إعادة تشغيل التحكم', 'New PIN': 'رمز جديد', 'Open on your phone': 'افتح على هاتفك',
+  'After recording': 'بعد التسجيل', 'When a recording ends, turns it into MP4 with FFmpeg (no quality loss), or runs a program of your choice on it.': 'عند انتهاء التسجيل، تحوّله إلى MP4 عبر FFmpeg دون فقدان الجودة، أو تشغّل عليه برنامجاً تختاره.',
+  'What to do': 'ماذا تفعل', 'Make an MP4 copy with FFmpeg': 'إنشاء نسخة MP4 عبر FFmpeg', 'Run my program': 'تشغيل برنامجي', 'FFmpeg program': 'برنامج FFmpeg',
+  'Full path to ffmpeg.exe, or just ffmpeg when it is on the PATH.': 'المسار الكامل لـ ffmpeg.exe، أو ffmpeg فقط إن كان في PATH.', 'My program': 'برنامجي', 'For "Run my program". Full path to an .exe.': 'لخيار "تشغيل برنامجي". المسار الكامل لملف .exe.',
+  'Arguments': 'المعاملات', '{path} is the recording file, {title} its title, {folder} its folder.': '{path} ملف التسجيل، {title} عنوانه، {folder} مجلده.', 'Run on the last recording': 'تشغيل على آخر تسجيل',
+  'No recording file to work on.': 'لا يوجد ملف تسجيل للعمل عليه.', 'Choose the program to run first.': 'اختر البرنامج أولاً.', 'Working on': 'جارٍ العمل على', 'Done': 'تم', 'Finished with errors': 'انتهى مع أخطاء',
+  'Recording processed': 'تمت معالجة التسجيل', 'The program reported an error': 'أبلغ البرنامج عن خطأ',
 });
 
 /* Core: state, persistence, helpers, shared UI (toasts, modals, popovers, tooltips, files). */
@@ -1517,7 +1571,7 @@ function renderChrome() {
       <button class="x" data-act="win-close" aria-label="${t('Close')}" data-tip="${t('Close')}">${ic('x')}</button>
     </div><div class="clock ltr" id="clock"></div><div class="date" id="date"></div></div>`;
   $('#side').innerHTML = `<nav class="side-nav" aria-label="${t('Sections')}">${SIDE.map(([v, i, l]) => `<button data-act="go" data-v="${v}" ${S.view === v ? 'aria-current="page"' : ''} data-tip="${t(l)}">${ic(i)}<span>${t(l)}</span>${ic('chev', 'chev')}</button>`).join('')}</nav>
-    <div class="side-foot">${DISH}<b>NOVA DVB Studio</b><small>v0.2.0 &nbsp;•&nbsp; ${t('Professional Edition')}</small></div>`;
+    <div class="side-foot">${DISH}<b>NOVA DVB Studio</b><small>v0.3.0 &nbsp;•&nbsp; ${t('Professional Edition')}</small></div>`;
   renderStatus();
   tickClock();
 }
@@ -2555,7 +2609,7 @@ const CAT_BODY = {
   playback: () => sSel('decoder', 'Decoder', ['Auto', 'LibVLC', 'Software only']) + sSw('hwAccel', 'Hardware decoding when available') + sTxt('buffer', 'Stream buffer (ms)', 'Higher is steadier, lower changes channel faster.', 'inputmode="numeric"') + sSw('reconnect', 'Reconnect after signal loss') + sTxt('reconnectSec', 'Retry every (seconds)', '', 'inputmode="numeric"') + sSw('resumeLast', 'Remember the last channel'),
   osd: () => `<div class="ib-sample">${ic('info')}<span>${t('The info bar appears over the picture when you change channel. Press I to show or hide it.')}</span></div>`
     + sSw('osdZap', 'Show on channel change') + sSel('osdSec', 'Show for', [['3', '3 seconds'], ['5', '5 seconds'], ['8', '8 seconds'], ['12', '12 seconds'], ['0', 'Until I hide it']])
-    + sSel('osdSize', 'Size', [['compact', 'Compact'], ['normal', 'Normal'], ['large', 'Large']]) + sSw('osdMouse', 'Show when the mouse moves over the picture')
+    + sSel('osdSize', 'Size', [['compact', 'Small'], ['normal', 'Medium'], ['large', 'Large']], 'Small covers under half the picture width.') + sSw('osdMouse', 'Show when the mouse moves over the picture')
     + `<div class="row"><button class="btn sm" data-act="osd-test" ${hasDevice() && S.channels.length ? '' : 'disabled'}>${ic('eye')}${t('Show it now')}</button></div>`,
   audio: () => sSel('audioDevice', 'Output device', ['System default']) + sSel('audioLang', 'Preferred audio language', ['Arabic', 'English', 'French']) + sSel('downmix', 'Channels', ['Stereo', '5.1']) + sSw('passthrough', 'Pass AC3 and E-AC3 to the receiver', 'For HDMI or optical amplifiers.') + sSw('normalize', 'Even out volume between channels'),
   video: () => sSel('deinterlace', 'Deinterlacing', ['Auto', 'Off', 'Bob', 'Yadif']) + sSel('aspect', 'Default aspect ratio', ['Fill', '16:9', '4:3', '21:9']) + sSel('subLang', 'Preferred subtitles', ['Off', 'Arabic', 'English', 'French']) + sTxt('subSize', 'Subtitle size (%)', '', 'inputmode="numeric"'),
@@ -3200,6 +3254,7 @@ if (NATIVE) (() => {
     engine('recStop');
     const c = chById(Engine.recCh) || curCh(), mins = Math.max(1, Math.round((Date.now() - Engine.recStart) / 6e4));
     S.recordings.unshift({ id: uid('r'), title: Engine.recTitle || c.name, ch: c.id, at: Engine.recStart, mins, gb: +((Engine.signal?.bitrateKbps || 0) * mins * 60 / 8e6).toFixed(2), path: Engine.recPath });
+    pluginEmit('recordingDone', { ...S.recordings[0] });
     Engine.recording = false; recording = null; save(); toast(t('Recording saved to Recordings'), 'good');
     if (S.view === 'live') { renderPlayer(); renderCards(); } else if (S.view === 'recordings') refresh();
   }
@@ -3254,7 +3309,7 @@ if (NATIVE) (() => {
     if (S.settings.confirmExit) confirmBox({ title: t('Close NOVA DVB Studio?'), msg: Engine.recording ? t('A recording is running. Closing stops it.') : S.timers.length ? t('Scheduled recordings run only while NOVA is open.') : t('Playback stops and the tuner is released.'), yes: t('Close'), onYes: reallyClose });
     else reallyClose();
   };
-  A.about = () => openModal({ title: 'NOVA DVB Studio', width: 480, body: `<dl class="kv dl-plain"><dt>${t('Version')}</dt><dd class="ltr">0.2.0</dd><dt>${t('Tuner')}</dt><dd>${esc(Engine.name || t('No tuner'))}</dd><dt>${t('Extension')}</dt><dd>${esc(Engine.caps?.extension || '—')}</dd><dt>${t('Icons')}</dt><dd>Lucide (ISC)</dd><dt>${t('Video')}</dt><dd>LibVLC (LGPL)</dd><dt>${t('Logos')}</dt><dd>picons project (github.com/picons/picons)</dd></dl>`, foot: `<button class="btn" data-act="logs">${t('Open log folder')}</button><button class="btn primary" data-act="modal-close">${t('Close')}</button>` });
+  A.about = () => openModal({ title: 'NOVA DVB Studio', width: 480, body: `<dl class="kv dl-plain"><dt>${t('Version')}</dt><dd class="ltr">0.3.0</dd><dt>${t('Tuner')}</dt><dd>${esc(Engine.name || t('No tuner'))}</dd><dt>${t('Extension')}</dt><dd>${esc(Engine.caps?.extension || '—')}</dd><dt>${t('Icons')}</dt><dd>Lucide (ISC)</dd><dt>${t('Video')}</dt><dd>LibVLC (LGPL)</dd><dt>${t('Logos')}</dt><dd>picons project (github.com/picons/picons)</dd></dl>`, foot: `<button class="btn" data-act="logs">${t('Open log folder')}</button><button class="btn primary" data-act="modal-close">${t('Close')}</button>` });
   A.logs = () => post({ cmd: 'openLogs' });
   saveFile = async (filename, text) => post({ cmd: 'saveFile', name: filename, text });
   A['pick-folder'] = el => post({ cmd: 'pickFolder', key: el.dataset.v });
@@ -3380,6 +3435,7 @@ if (NATIVE) (() => {
   setTimeout(() => {
     post({ cmd: 'uiReady' });
     post({ cmd: 'epgLoad' });
+    post({ cmd: 'pluginsList' });
     if (!S.satListAt) post({ cmd: 'fetchText', url: SAT_LIST_URL });
     if (S.settings.epgSource === 'XMLTV address' && S.settings.epgUrl && S.settings.epgUpdate !== 'Manually') setTimeout(() => loadXmltv(false), 4000);
   }, 0);
@@ -3391,6 +3447,8 @@ if (NATIVE) (() => {
    In the browser it is drawn in HTML. In the Windows app the picture is a native window, so the same
    ready-made data goes to a transparent window that sits on top of it (OsdWindow.cs). */
 const IB = { until: 0, pinned: false, timer: 0, last: '' };
+/* Version 0.2.1 made the bar smaller: older saved settings move to the new compact size once. */
+if (S.settings.osdSizeV !== 2) { S.settings.osdSize = 'compact'; S.settings.osdSizeV = 2; }
 const pad3 = n => String(n ?? '').padStart(3, '0');
 const resOf = ch => (ch?.res || '').split(/\s*[x\u00d7]\s*/).map(Number);
 function qualityOf(ch) {
@@ -3434,7 +3492,7 @@ function infobarData(ch = curCh()) {
   if (q) badges.push({ t: q, k: 'q' });
   if (ch.vcodec) badges.push({ t: ch.vcodec, k: '' });
   if (w && h && q !== 'SD' && aspectOf(w, h)) badges.push({ t: aspectOf(w, h), k: '' });
-  if (w && h) badges.push({ t: `${w}\u00d7${h}`, k: 'res' });
+  if (w && h && (S.settings.osdSize || 'compact') !== 'compact') badges.push({ t: `${w}\u00d7${h}`, k: 'res' });   /* the small bar keeps room for the name */
   const sg = ibSignal();
   const audioLang = ch.audio?.[S.player.audio] ?? ch.audio?.[0];
   return {
@@ -3451,7 +3509,7 @@ function infobarData(ch = curCh()) {
     sub: { label: t('SUB'), sub: ch.subs?.length ? `${ch.subs.length}` : '', on: !!ch.subs?.length },
     txt: { label: t('TXT'), sub: '', on: !!ch.txt },
     picon: { src: S.picons[ch.id] && S.picons[ch.id] !== 'auto' ? S.picons[ch.id] : '', code: ch.code, num: ch.num || '', c1: ch.p1, c2: ch.p2 },
-    accent: cssVar('--accent'), accent2: cssVar('--accent-2'),
+    accent: cssVar('--accent'), accent2: cssVar('--accent-2'), size: S.settings.osdSize || 'compact',
   };
 }
 
@@ -3498,7 +3556,7 @@ function ibRender() {
   if (!el) { el = document.createElement('div'); el.id = 'ib'; el.className = 'ib-wrap'; el.setAttribute('role', 'status'); stage.append(el); }
   stage.classList.toggle('ib-on', !!d);
   el.classList.toggle('show', !!d);
-  el.dataset.size = S.settings.osdSize || 'normal';
+  el.dataset.size = S.settings.osdSize || 'compact';
   if (d) el.innerHTML = `<div class="ib" dir="ltr">${infobarHTML(d)}</div>`;
 }
 function ibShow(sec) {
@@ -3545,6 +3603,445 @@ $('#main')?.addEventListener('mousemove', e => {
 });
 setInterval(() => { if (ibOn()) ibRender(); }, 1000);
 onPlayerDrawn = () => { if (ibOn() || IB.last !== 'null') ibRender(); };
+
+/* Plugins. Each one is a folder with plugin.json (id, name, version, permissions, settings, actions)
+   and main.js, which receives a "nova" object and may use only what its permissions allow.
+   Built-in plugins ship with NOVA; others go in %LOCALAPPDATA%\NOVA DVB Studio\plugins.
+   All are off until turned on in Settings, Plugins. See plugins-guide.md for the full interface. */
+const APP_VERSION = '0.3.0';
+Object.assign(ICONS, {
+  phone: '<rect width="14" height="20" x="5" y="2" rx="2" ry="2"></rect><path d="M12 18h.01"></path>',
+  cast: '<path d="M2 8V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6"></path><path d="M2 12a9 9 0 0 1 8 8"></path><path d="M2 16a5 5 0 0 1 4 4"></path><line x1="2" x2="2.01" y1="20" y2="20"></line>',
+  terminal: '<polyline points="4 17 10 11 4 5"></polyline><line x1="12" x2="20" y1="19" y2="19"></line>',
+});
+function plugState() { return (S.plugins ||= { on: {}, cfg: {} }); }
+const PL = { list: [], folder: '', loaded: false };
+const PERMS = {
+  channels: ['list', 'Read your channel list'],
+  player: ['play', 'Change channel, volume and recording'],
+  epg: ['cal', 'Add programs to the guide'],
+  http: ['globe', 'Download from the internet'],
+  recordings: ['rec', 'Read your recordings'],
+  server: ['server', 'Accept connections from your home network'],
+  exec: ['terminal', 'Run programs on this computer'],
+};
+const RISKY = ['exec', 'server'];
+const plugById = id => PL.list.find(p => p.manifest.id === id);
+const chInfo = c => ({ id: c.id, name: c.name, number: c.lcn, type: c.type, sid: c.sid, tsid: c.tsid, onid: c.onid, sat: c.sat, freq: c.f, pol: c.p });
+
+function plog(p, text) {
+  p.log.push(`${fmtTime(Date.now())}  ${text}`);
+  if (p.log.length > 40) p.log.shift();
+  plugRefresh();
+}
+function perr(p, e) {
+  p.error = String(e?.message || e);
+  plog(p, `${t('Error')}: ${p.error}`);
+}
+/* Runs plugin code so that a mistake in one plugin never stops NOVA or another plugin. */
+function guard(p, fn, ...args) {
+  try {
+    const r = fn(...args);
+    if (r && typeof r.catch === 'function') r.catch(e => perr(p, e));
+    return r;
+  } catch (e) { perr(p, e); return undefined; }
+}
+let plugTimer = 0;
+function plugRefresh() {
+  clearTimeout(plugTimer);
+  plugTimer = setTimeout(() => { if (S.view === 'preferences' && setCat === 'plugins' && !document.activeElement?.matches?.('input,select,textarea')) refresh(); }, 120);
+}
+
+function makeApi(p) {
+  const m = p.manifest, id = m.id, rt = p.rt;
+  const need = k => { if (!(m.permissions || []).includes(k)) throw new Error(`${t('This plugin has no permission for')} "${k}"`); };
+  const appOnly = () => { if (!NATIVE) throw new Error(t('This works in the Windows app.')); };
+  const defaults = Object.fromEntries((m.settings || []).map(s => [s.key, s.default ?? (s.type === 'switch' ? false : '')]));
+  const ask = (msg, ms) => hostAsk(msg, ms);
+  return Object.freeze({
+    id, appVersion: APP_VERSION, windowsApp: NATIVE, language: S.lang,
+    get settings() { return { ...defaults, ...(plugState().cfg[id] || {}) }; },
+    setSetting(k, v) { (plugState().cfg[id] ||= {})[k] = v; save(); plugRefresh(); },
+    on(ev, fn) { rt.subs.push([ev, fn]); },
+    onAction(a, fn) { rt.actions[a] = fn; },
+    every(ms, fn) { const h = setInterval(() => guard(p, fn), Math.max(1000, Number(ms) || 0)); rt.timers.add(h); return h; },
+    later(ms, fn) { const h = setTimeout(() => { rt.timers.delete(h); guard(p, fn); }, Number(ms) || 0); rt.timers.add(h); return h; },
+    status(text) { p.status = String(text ?? ''); plugRefresh(); },
+    toast(msg, kind) { toast(`${m.name}: ${msg}`, kind); },
+    log(...a) { plog(p, a.map(x => (typeof x === 'string' ? x : JSON.stringify(x))).join(' ')); },
+    t: s => t(s),
+    channels() { need('channels'); return S.channels.filter(c => !c.hidden).map(chInfo); },
+    current() { need('channels'); const c = curCh(); return c ? chInfo(c) : null; },
+    player: Object.freeze({
+      state() { need('player'); const c = curCh(); return { channel: c ? chInfo(c) : null, playing: !!S.player.playing, volume: S.player.vol, muted: !!S.player.muted, recording: NATIVE ? !!Engine.recording : !!recording, now: c ? nowNext(c)[0]?.title || '' : '' }; },
+      tune(chId) { need('player'); if (!chById(chId)) throw new Error(t('No such channel')); tune(chId); },
+      step(d) { need('player'); A['ch-step']({ dataset: { v: String(d > 0 ? 1 : -1) } }); },
+      volume(v) { need('player'); S.player.vol = clamp(Math.round(Number(v) || 0), 0, 100); if (S.player.vol > 0) S.player.muted = false; Audio_.sync(); save(); if (S.view === 'live') renderPlayer(); },
+      mute(on) { need('player'); S.player.muted = on === undefined ? !S.player.muted : !!on; Audio_.sync(); save(); if (S.view === 'live') renderPlayer(); },
+      info() { need('player'); ibShow(); },
+      record() { need('player'); A['toggle-rec'](); },
+    }),
+    epg: Object.freeze({
+      add(chId, events) {
+        need('epg');
+        if (!chById(chId)) throw new Error(t('No such channel'));
+        epgIngest('ch:' + chId, (events || []).map(e => ({ start: +new Date(e.start), end: +new Date(e.end), title: String(e.title || ''), desc: String(e.desc || '').slice(0, 600), genre: 0 })));
+        epgPersist(true); epgRefreshViews();
+      },
+      importXmltv(text) { need('epg'); return applyXmltv(String(text)); },
+    }),
+    http: Object.freeze({
+      async getText(url) {
+        need('http');
+        if (!/^https?:\/\//i.test(url)) throw new Error(t('Only http and https addresses are allowed'));
+        const r = await getText(url);
+        if (!r.ok) throw new Error(`${t('Download failed')}: ${url}`);
+        return r.text;
+      },
+    }),
+    recordings() { need('recordings'); return S.recordings.map(r => ({ ...r })); },
+    async exec(file, args = []) {
+      need('exec'); appOnly();
+      const r = await ask({ cmd: 'pluginExec', file: String(file), args: [...args].map(String) }, 6 * 36e5 + 6e4);
+      if (!r.ok) throw new Error(r.error || t('The program did not start'));
+      return { code: r.code, output: r.out || '' };
+    },
+    server: Object.freeze({
+      async stream(on, port) {
+        need('server'); appOnly();
+        const r = await ask({ cmd: 'serverStream', on: !!on, port: Number(port) || 8001 }, 15000);
+        if (!r.ok) throw new Error(r.error || t('The port could not be opened'));
+        return { channel: r.urls || [], transponder: r.whole || [] };
+      },
+      async remote(on, port, pin) {
+        need('server'); appOnly();
+        const r = await ask({ cmd: 'serverRemote', on: !!on, port: Number(port) || 8080, pin: String(pin || '') }, 15000);
+        if (!r.ok) throw new Error(r.error || t('The port could not be opened'));
+        return { urls: r.urls || [] };
+      },
+      remoteState(state) { need('server'); if (NATIVE) window.chrome.webview.postMessage({ cmd: 'remoteState', state }); },
+    }),
+  });
+}
+
+function startPlugin(p) {
+  if (p.running || p.broken) return;
+  p.rt = { subs: [], actions: {}, timers: new Set() };
+  p.error = ''; p.status = '';
+  p.running = true;
+  try {
+    const main = p.main || new Function('nova', `"use strict";\n${p.code}\n//# sourceURL=plugin-${p.manifest.id}.js`);
+    guard(p, main, makeApi(p));
+    plog(p, t('Started'));
+  } catch (e) { perr(p, e); }
+}
+function stopPlugin(p) {
+  if (!p.running) return;
+  for (const [ev, fn] of p.rt.subs) if (ev === 'stop') guard(p, fn);
+  p.rt.timers.forEach(h => { clearInterval(h); clearTimeout(h); });
+  p.rt = { subs: [], actions: {}, timers: new Set() };
+  p.running = false; p.status = '';
+  plog(p, t('Stopped'));
+}
+function pluginEmit(ev, data) {
+  for (const p of PL.list) if (p.running) for (const [e, fn] of p.rt.subs) if (e === ev) guard(p, fn, data);
+}
+
+/* Reads a manifest and checks the fields NOVA relies on. */
+function readManifest(raw) {
+  const m = typeof raw === 'string' ? JSON.parse(raw) : raw;
+  if (!m || !/^[a-z0-9][a-z0-9._-]{1,59}$/.test(m.id || '')) throw new Error(t('plugin.json needs an id of lower-case letters, digits, dots or dashes'));
+  if (!m.name) throw new Error(t('plugin.json needs a name'));
+  m.permissions = (m.permissions || []).filter(k => PERMS[k]);
+  m.settings = Array.isArray(m.settings) ? m.settings.filter(s => s && s.key) : [];
+  m.actions = Array.isArray(m.actions) ? m.actions.filter(a => a && a.id) : [];
+  return m;
+}
+function addPlugin(def) {
+  const old = plugById(def.manifest.id);
+  if (old) { stopPlugin(old); PL.list.splice(PL.list.indexOf(old), 1); }
+  const p = { ...def, log: old?.log || [], running: false, error: '', status: '', rt: { subs: [], actions: {}, timers: new Set() } };
+  PL.list.push(p);
+  return p;
+}
+function startEnabled() { PL.list.forEach(p => { if (plugState().on[p.manifest.id]) startPlugin(p); }); plugRefresh(); }
+
+/* Folder plugins arrive from the Windows app as text. A broken one is listed with its error. */
+function loadFolderPlugins(list, folder) {
+  PL.folder = folder || '';
+  PL.list.filter(p => !p.builtin).forEach(p => stopPlugin(p));
+  PL.list = PL.list.filter(p => p.builtin);
+  for (const f of list || []) {
+    let manifest;
+    try { manifest = readManifest(f.manifest); } catch (e) {
+      PL.list.push({ manifest: { id: f.dir, name: f.dir, permissions: [], settings: [], actions: [] }, dir: f.dir, broken: true, error: `plugin.json: ${e.message}`, log: [], rt: { subs: [], actions: {}, timers: new Set() } });
+      continue;
+    }
+    if (PL.list.some(p => p.builtin && p.manifest.id === manifest.id)) continue;
+    addPlugin({ manifest, code: f.code || '', dir: f.dir, builtin: false });
+  }
+  PL.loaded = true;
+  startEnabled();
+}
+
+/* ---------- Settings, Plugins ---------- */
+const plugField = (p, s) => {
+  const v = (plugState().cfg[p.manifest.id] || {})[s.key] ?? s.default ?? (s.type === 'switch' ? false : '');
+  const attrs = `data-chg="plug-set" data-id="${esc(p.manifest.id)}" data-k="${esc(s.key)}" aria-label="${esc(s.label || s.key)}"`;
+  const ctl = s.type === 'switch' ? `<label class="switch"><input type="checkbox" ${attrs} ${v ? 'checked' : ''}><i></i></label>`
+    : s.type === 'select' ? `<select class="sel" ${attrs}>${(s.options || []).map(o => { const [ov, ol] = Array.isArray(o) ? o : [o, o]; return `<option value="${esc(ov)}" ${String(v) === String(ov) ? 'selected' : ''}>${esc(t(ol))}</option>`; }).join('')}</select>`
+    : s.type === 'textarea' ? `<textarea class="field-ta" rows="3" dir="ltr" ${attrs}>${esc(v)}</textarea>`
+    : `<span class="field" style="width:100%"><input ${attrs} value="${esc(v)}" ${s.type === 'number' ? 'inputmode="numeric"' : ''} ${s.ltr !== false ? 'dir="ltr"' : ''}></span>`;
+  return sRow(s.label || s.key, s.help || '', ctl, s.type === 'switch');
+};
+function plugCard(p) {
+  const m = p.manifest, on = !!plugState().on[m.id];
+  const perms = (m.permissions || []).map(k => `<span class="perm ${RISKY.includes(k) ? 'risky' : ''}">${ic(PERMS[k][0])}${t(PERMS[k][1])}</span>`).join('');
+  return `<article class="plug ${on ? 'on' : ''} ${p.broken ? 'broken' : ''}">
+    <div class="plug-h"><span class="plug-ic">${ic(m.icon && ICONS[m.icon] ? m.icon : 'plug')}</span>
+      <div class="plug-id"><b>${esc(t(m.name))}</b><small><span class="ltr">${esc(m.version || '')}</span>${m.author ? ` · ${esc(m.author)}` : ''} · ${t(p.builtin ? 'Built-in' : 'From the plugins folder')}</small></div>
+      <span class="sp"></span>${p.running ? `<span class="tag good">${t('Running')}</span>` : ''}
+      <label class="switch"><input type="checkbox" data-chg="plug-on" data-id="${esc(m.id)}" ${on ? 'checked' : ''} ${p.broken ? 'disabled' : ''} aria-label="${t('Turn on')} ${esc(t(m.name))}"><i></i></label></div>
+    ${m.description ? `<p class="sub">${esc(t(m.description))}</p>` : ''}
+    ${perms ? `<div class="perms">${perms}</div>` : ''}
+    ${p.error ? `<div class="plug-err">${ic('alert')}<span>${esc(p.error)}</span></div>` : ''}
+    ${on && !p.broken ? `<div class="plug-body">${m.settings.map(s => plugField(p, s)).join('')}
+      ${m.actions.length ? `<div class="row">${m.actions.map(a => `<button class="btn sm" data-act="plug-act" data-v="${esc(m.id)}|${esc(a.id)}" ${p.running ? '' : 'disabled'}>${a.icon && ICONS[a.icon] ? ic(a.icon) : ''}${esc(t(a.label || a.id))}</button>`).join('')}</div>` : ''}
+      ${p.status ? `<pre class="plug-status" dir="auto">${esc(p.status)}</pre>` : ''}</div>` : ''}
+    <div class="row plug-foot">${p.log.length ? `<details><summary>${t('Activity')} (${p.log.length})</summary><pre class="plug-log" dir="ltr">${esc(p.log.slice(-12).join('\n'))}</pre></details>` : ''}<span class="sp"></span>
+      ${!p.builtin && NATIVE ? `<button class="btn sm danger" data-act="plug-remove" data-v="${esc(p.dir || m.id)}">${ic('trash')}${t('Remove')}</button>` : ''}</div>
+  </article>`;
+}
+CAT_BODY.plugins = () => `<div class="ib-sample">${ic('plug')}<span>${t('Plugins add features to NOVA. Each one asks only for what it needs, and stays off until you turn it on.')}</span></div>
+  <div class="row">${NATIVE ? `<button class="btn sm primary" data-act="plug-install">${ic('upload')}${t('Install plugin (.zip)')}</button><button class="btn sm" data-act="plug-folder">${ic('folder')}${t('Open plugins folder')}</button><button class="btn sm" data-act="plug-reload">${ic('refresh')}${t('Reload plugins')}</button>` : `<span class="hint">${t('Plugins from a folder load in the Windows app.')}</span>`}<button class="btn sm" data-act="plug-guide">${ic('text')}${t('How to write a plugin')}</button></div>
+  <div class="plugs">${PL.list.map(plugCard).join('') || `<div class="empty">${ic('plug')}<span>${t('No plugins')}</span></div>`}</div>`;
+CATS.splice(CATS.findIndex(c => c[0] === 'picons') + 1, 0, ['plugins', 'plug', 'Plugins']);
+
+function setPluginOn(p, on) {
+  plugState().on[p.manifest.id] = on;
+  save();
+  if (on) startPlugin(p); else stopPlugin(p);
+  refresh();
+}
+CHG['plug-on'] = el => {
+  const p = plugById(el.dataset.id);
+  if (!p) return;
+  if (!el.checked) { setPluginOn(p, false); return; }
+  const risky = (p.manifest.permissions || []).filter(k => RISKY.includes(k));
+  if (!risky.length) { setPluginOn(p, true); return; }
+  el.checked = false;
+  confirmBox({ title: `${t('Turn on')} ${t(p.manifest.name)}?`,
+    msg: `${t('This plugin asks to')}: ${risky.map(k => t(PERMS[k][1])).join(', ')}. ${t(p.builtin ? 'It comes with NOVA.' : 'Turn it on only if you trust where it came from.')}`,
+    yes: t('Turn on'), danger: false, onYes: () => setPluginOn(p, true) });
+};
+CHG['plug-set'] = el => {
+  const p = plugById(el.dataset.id);
+  if (!p) return;
+  const s = p.manifest.settings.find(x => x.key === el.dataset.k);
+  const v = el.type === 'checkbox' ? el.checked : s?.type === 'number' ? Number(el.value) : el.value;
+  (plugState().cfg[p.manifest.id] ||= {})[el.dataset.k] = v;
+  save();
+  /* Typing fires on every key; the plugin hears about it once the typing stops. */
+  clearTimeout(p.setTimer);
+  p.setTimer = setTimeout(() => { if (p.running) for (const [ev, fn] of p.rt.subs) if (ev === 'settings') guard(p, fn, { key: el.dataset.k, value: v }); }, 800);
+};
+A['plug-act'] = el => {
+  const [id, act] = el.dataset.v.split('|');
+  const p = plugById(id);
+  const fn = p?.running && p.rt.actions[act];
+  if (fn) guard(p, fn); else toast(t('Turn the plugin on first.'), 'warn');
+};
+A['plug-folder'] = () => window.chrome?.webview?.postMessage({ cmd: 'openFolder', key: 'plugins' });
+A['plug-reload'] = () => { window.chrome?.webview?.postMessage({ cmd: 'pluginsList' }); toast(t('Plugins reloaded'), 'good'); };
+A['plug-remove'] = el => confirmBox({ title: t('Remove this plugin?'), msg: t('Its folder is deleted. Its settings are kept in case you install it again.'), yes: t('Remove'),
+  onYes: () => { const p = PL.list.find(x => (x.dir || x.manifest.id) === el.dataset.v); if (p) { stopPlugin(p); plugState().on[p.manifest.id] = false; save(); } window.chrome.webview.postMessage({ cmd: 'pluginRemove', dir: el.dataset.v }); } });
+A['plug-install'] = async () => {
+  const [f] = await pickFiles('.zip,application/zip');
+  if (!f) return;
+  if (f.size > 20 * 1024 * 1024) { toast(t('That file is too large for a plugin.'), 'bad'); return; }
+  const b64 = await new Promise(res => { const r = new FileReader(); r.onload = () => res(String(r.result).split(',')[1] || ''); r.readAsDataURL(f); });
+  const r = await hostAsk({ cmd: 'pluginInstall', b64 }, 60000);
+  if (r.ok) toast(`${t('Plugin installed')}: ${r.dir}. ${t('Turn it on below.')}`, 'good');
+  else toast(`${t('The plugin could not be installed')}: ${r.error || ''}`, 'bad');
+};
+A['plug-guide'] = () => openModal({ title: t('How to write a plugin'), width: 640, body: `<p class="sub">${t('Make a folder in the plugins folder with two files. NOVA lists it after Reload plugins.')}</p>
+  <pre class="plug-log" dir="ltr">plugin.json
+{
+  "id": "my-plugin",
+  "name": "My plugin",
+  "version": "1.0.0",
+  "permissions": ["channels", "player"],
+  "settings": [{ "key": "msg", "label": "Message", "default": "Hello" }],
+  "actions": [{ "id": "hello", "label": "Say it" }]
+}
+
+main.js
+nova.onAction('hello', () => nova.toast(nova.settings.msg));
+nova.on('channel', ch => nova.log('Now on', ch.name));
+nova.on('recordingDone', r => nova.log('Saved', r.path));
+nova.on('stop', () => nova.log('Bye'));</pre>
+  <p class="sub">${t('Permissions')}: ${Object.entries(PERMS).map(([k, v]) => `<b class="ltr">${k}</b> ${t(v[1])}`).join(' · ')}</p>
+  <p class="sub">${t('The full list of functions is in README.md in the plugins folder.')}</p>`,
+  foot: `<button class="btn" data-act="modal-close">${t('Close')}</button>` });
+
+/* Events for plugins: channel change, recordings, phone remote commands */
+const tuneWithInfo = tune;
+tune = id => { tuneWithInfo(id); const c = chById(id); if (c && S.player.ch === id) pluginEmit('channel', chInfo(c)); };
+if (NATIVE) {
+  window.chrome.webview.addEventListener('message', e => {
+    const m = e.data;
+    if (m.evt === 'plugins') { loadFolderPlugins(m.list, m.folder); }
+    else if (m.evt === 'remoteCmd') pluginEmit('remote', { act: m.act, value: m.v });
+    else if (m.evt === 'pluginInstalled' && m.id && HostReq.has(m.id)) { HostReq.get(m.id)(m); HostReq.delete(m.id); }
+    else if ((m.evt === 'serverStatus' || m.evt === 'pluginExecDone') && m.id && HostReq.has(m.id)) { HostReq.get(m.id)(m); HostReq.delete(m.id); }
+  });
+}
+
+/* Plugins that come with NOVA. They use the same "nova" interface as plugins from the folder,
+   so they double as working examples. */
+const BUILTIN_PLUGINS = [
+  {
+    manifest: {
+      id: 'nova.guide-sources', name: 'Extra guide sources', version: '1.0.0', author: 'NOVA', icon: 'cal',
+      description: 'Adds programs from one or more XMLTV addresses to the guide, next to the broadcast listings, and refreshes them on a schedule.',
+      permissions: ['epg', 'http'],
+      settings: [
+        { key: 'urls', label: 'XMLTV addresses', type: 'textarea', default: '', help: 'One address per line. Gzip files work too. Use sources you are allowed to use.' },
+        { key: 'hours', label: 'Refresh every', type: 'select', default: '12', options: [['6', '6 hours'], ['12', '12 hours'], ['24', '24 hours'], ['0', 'Only when I ask']] },
+      ],
+      actions: [{ id: 'load', label: 'Load now', icon: 'download' }],
+    },
+    main(nova) {
+      const load = async () => {
+        const urls = String(nova.settings.urls || '').split(/\s+/).filter(u => /^https?:\/\//i.test(u));
+        if (!urls.length) { nova.status(nova.t('Add at least one address.')); return; }
+        let progs = 0, chans = 0;
+        for (const url of urls) {
+          try {
+            const r = nova.epg.importXmltv(await nova.http.getText(url));
+            progs += r.progs; chans += r.chans;
+            nova.log(url, '→', r.progs, 'programs');
+          } catch (e) { nova.log(url, '→', e.message); }
+        }
+        nova.status(`${progs} ${nova.t('programs for')} ${chans} ${nova.t('channels')} · ${new Date().toLocaleTimeString()}`);
+        if (progs) nova.toast(`${progs} ${nova.t('programs for')} ${chans} ${nova.t('channels')}`, 'good');
+      };
+      nova.onAction('load', load);
+      const hours = Number(nova.settings.hours);
+      if (hours > 0) { nova.later(5000, load); nova.every(hours * 36e5, load); }
+    },
+  },
+  {
+    manifest: {
+      id: 'nova.lan-stream', name: 'Stream to the network', version: '1.0.0', author: 'NOVA', icon: 'cast',
+      description: 'Sends the channel on screen to other devices at home. Open the address in VLC, Kodi or a TV app. The transponder address carries every channel on it.',
+      permissions: ['server', 'channels'],
+      settings: [{ key: 'port', label: 'Port', type: 'number', default: 8001, help: 'Change it if another program uses this port.' }],
+      actions: [{ id: 'restart', label: 'Restart the stream', icon: 'refresh' }],
+    },
+    main(nova) {
+      const start = async () => {
+        if (!nova.windowsApp) { nova.status(nova.t('This works in the Windows app.')); return; }
+        try {
+          const r = await nova.server.stream(true, nova.settings.port);
+          nova.status(`${nova.t('Channel on screen')}:\n${r.channel.join('\n')}\n\n${nova.t('Whole transponder')}:\n${r.transponder.join('\n')}`);
+        } catch (e) { nova.status(e.message); nova.toast(e.message, 'bad'); }
+      };
+      nova.onAction('restart', start);
+      nova.on('settings', start);
+      nova.on('stop', () => { if (nova.windowsApp) nova.server.stream(false); });
+      start();
+    },
+  },
+  {
+    manifest: {
+      id: 'nova.phone-remote', name: 'Phone remote', version: '1.0.0', author: 'NOVA', icon: 'phone',
+      description: 'Control NOVA from a phone on the same network: channel list, up and down, volume, info bar and recording. The phone needs the PIN shown here.',
+      permissions: ['server', 'channels', 'player'],
+      settings: [
+        { key: 'port', label: 'Port', type: 'number', default: 8080 },
+        { key: 'pin', label: 'PIN', default: '', help: 'Four to eight digits. A new one is made when empty.' },
+      ],
+      actions: [{ id: 'restart', label: 'Restart the remote', icon: 'refresh' }, { id: 'newpin', label: 'New PIN', icon: 'key' }],
+    },
+    main(nova) {
+      const state = () => {
+        const s = nova.player.state();
+        return { app: 'NOVA DVB Studio', channel: s.channel, playing: s.playing, volume: s.volume, muted: s.muted, recording: s.recording, now: s.now,
+          channels: nova.channels().slice(0, 800).map(c => ({ id: c.id, name: c.name, number: c.number, type: c.type })) };
+      };
+      const push = () => nova.server.remoteState(state());
+      const start = async () => {
+        if (!nova.windowsApp) { nova.status(nova.t('This works in the Windows app.')); return; }
+        let pin = String(nova.settings.pin || '');
+        if (!/^\d{4,8}$/.test(pin)) { pin = String(Math.floor(1000 + Math.random() * 9000)); nova.setSetting('pin', pin); }
+        try {
+          const r = await nova.server.remote(true, nova.settings.port, pin);
+          push();
+          nova.status(`${nova.t('Open on your phone')}:\n${r.urls.join('\n')}\n\nPIN: ${pin}`);
+        } catch (e) { nova.status(e.message); nova.toast(e.message, 'bad'); }
+      };
+      nova.on('remote', ({ act, value }) => {
+        if (act === 'up') nova.player.step(-1);
+        else if (act === 'down') nova.player.step(1);
+        else if (act === 'tune') nova.player.tune(String(value));
+        else if (act === 'volume') nova.player.volume(value);
+        else if (act === 'mute') nova.player.mute();
+        else if (act === 'info') nova.player.info();
+        else if (act === 'record') nova.player.record();
+        nova.later(300, push);
+      });
+      nova.on('channel', push);
+      nova.every(2000, push);
+      nova.onAction('restart', start);
+      nova.onAction('newpin', () => { nova.setSetting('pin', ''); start(); });
+      nova.on('settings', start);
+      nova.on('stop', () => { if (nova.windowsApp) nova.server.remote(false); });
+      start();
+    },
+  },
+  {
+    manifest: {
+      id: 'nova.after-recording', name: 'After recording', version: '1.0.0', author: 'NOVA', icon: 'terminal',
+      description: 'When a recording ends, turns it into MP4 with FFmpeg (no quality loss), or runs a program of your choice on it.',
+      permissions: ['exec', 'recordings'],
+      settings: [
+        { key: 'mode', label: 'What to do', type: 'select', default: 'mp4', options: [['mp4', 'Make an MP4 copy with FFmpeg'], ['run', 'Run my program']] },
+        { key: 'ffmpeg', label: 'FFmpeg program', default: 'ffmpeg', help: 'Full path to ffmpeg.exe, or just ffmpeg when it is on the PATH.' },
+        { key: 'program', label: 'My program', default: '', help: 'For "Run my program". Full path to an .exe.' },
+        { key: 'args', label: 'Arguments', default: '"{path}"', help: '{path} is the recording file, {title} its title, {folder} its folder.' },
+      ],
+      actions: [{ id: 'last', label: 'Run on the last recording', icon: 'play' }],
+    },
+    main(nova) {
+      const split = s => (String(s).match(/"[^"]*"|\S+/g) || []).map(a => a.replace(/^"|"$/g, ''));
+      const run = async rec => {
+        if (!rec?.path) { nova.toast(nova.t('No recording file to work on.'), 'warn'); return; }
+        const cfg = nova.settings, folder = rec.path.replace(/[\\/][^\\/]*$/, '');
+        let file, args;
+        if (cfg.mode === 'mp4') {
+          file = cfg.ffmpeg || 'ffmpeg';
+          args = ['-hide_banner', '-y', '-i', rec.path, '-map', '0:v?', '-map', '0:a?', '-c', 'copy', '-movflags', '+faststart', rec.path.replace(/\.ts$/i, '') + '.mp4'];
+        } else {
+          if (!cfg.program) { nova.toast(nova.t('Choose the program to run first.'), 'warn'); return; }
+          file = cfg.program;
+          args = split(cfg.args).map(a => a.replaceAll('{path}', rec.path).replaceAll('{title}', rec.title || '').replaceAll('{folder}', folder));
+        }
+        nova.status(`${nova.t('Working on')} ${rec.path}`);
+        try {
+          const r = await nova.exec(file, args);
+          nova.log(file, '→', 'exit', r.code);
+          nova.status(`${r.code === 0 ? nova.t('Done') : nova.t('Finished with errors')} (${r.code})\n${r.output.slice(-600)}`);
+          nova.toast(r.code === 0 ? nova.t('Recording processed') : nova.t('The program reported an error'), r.code === 0 ? 'good' : 'warn');
+        } catch (e) { nova.status(e.message); nova.toast(e.message, 'bad'); }
+      };
+      nova.on('recordingDone', run);
+      nova.onAction('last', () => run(nova.recordings()[0]));
+    },
+  },
+];
+BUILTIN_PLUGINS.forEach(def => addPlugin({ manifest: readManifest(def.manifest), main: def.main, builtin: true }));
+setTimeout(startEnabled, 400);
 
 /* Start-up */
 (function boot() {

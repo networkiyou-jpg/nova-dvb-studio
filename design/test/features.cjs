@@ -69,7 +69,7 @@ const ok = (c, n) => { if (c) res.pass++; else { res.fail.push(n); console.log('
   const d = osd.data;
   ok(d.num === '001' && d.name === 'Real One HD', 'number and name');
   ok(d.snr.pct === 92 && d.agc.pct === 89, 'SNR and AGC meters come from the driver');
-  ok(d.badges.map(x => x.t).join() === 'FHD,H.264,16:9,1920×1080', 'picture badges: ' + d.badges.map(x => x.t));
+  ok(d.badges.map(x => x.t).join() === 'FHD,H.264,16:9', 'picture badges: ' + d.badges.map(x => x.t));
   ok(d.sat.includes('7.0°W') && d.tp.startsWith('12245'), 'satellite and transponder');
   ok(d.access === 'TV (Free)', 'access line');
   ok(d.audio.on && d.audio.sub.includes('AAC') && d.sub.on && d.sub.sub === '1' && d.txt.on, 'audio, subtitles and teletext state');
@@ -153,6 +153,63 @@ const ok = (c, n) => { if (c) res.pass++; else { res.fail.push(n); console.log('
   ok(await last('recStop'), 'schedule stops the recording at the end');
   const tm = await p.evaluate(() => ({ n: S.timers.length, start: S.timers[0]?.start, rec: S.recordings[0]?.title }));
   ok(tm.n === 1 && tm.start > Date.now() + 20 * 36e5 && tm.rec === 'Real One HD - Evening News', 'daily schedule moves to tomorrow and the recording is listed: ' + JSON.stringify(tm));
+  /* Plugins */
+  const answer = async (cmd, reply) => { const m = await last(cmd); await recv({ ...reply(m), id: m.id }); return m; };
+  ok(await p.evaluate(() => infobarData().size) === 'compact', 'info bar is small by default');
+  await go('preferences'); await p.click('[data-act="set-cat"][data-v="plugins"]');
+  ok(await p.locator('.plug').count() === 4 && await p.locator('.plug.on').count() === 0, 'four built-in plugins, all off');
+  const plugSwitch = id => p.locator(`input[data-chg="plug-on"][data-id="${id}"]`);
+  await plugSwitch('nova.guide-sources').check();
+  ok(await p.evaluate(() => plugById('nova.guide-sources').running), 'guide plugin turns on without a question');
+  await p.fill('textarea[data-id="nova.guide-sources"][data-k="urls"]', 'https://example.org/guide.xml');
+  await clear(); await p.click('[data-act="plug-act"][data-v="nova.guide-sources|load"]'); await p.waitForTimeout(50);
+  const gf = await answer('fetchText', () => ({ evt: 'fetched', ok: true, text: xmltv }));
+  ok(gf.url === 'https://example.org/guide.xml', 'guide plugin downloads its address through the app');
+  await p.waitForTimeout(200);
+  ok((await p.textContent('.plug.on')).includes('1 programs for 1 channels'), 'guide plugin reports what it added');
+
+  await clear(); await plugSwitch('nova.lan-stream').click(); await p.waitForTimeout(100);
+  ok(await p.locator('.modal').count() === 1 && !(await last('serverStream')), 'network plugin asks before turning on');
+  await p.click('.modal .btn.primary'); await p.waitForTimeout(80);
+  const ss = await answer('serverStream', () => ({ evt: 'serverStatus', ok: true, urls: ['http://192.168.1.20:8001/live.ts'], whole: ['http://192.168.1.20:8001/transponder.ts'] }));
+  ok(ss.on === true && ss.port === 8001, 'stream server starts on port 8001');
+  await p.waitForTimeout(200);
+  ok((await p.textContent('#view-preferences, .main')).includes('http://192.168.1.20:8001/live.ts'), 'stream addresses are shown');
+  await clear(); await plugSwitch('nova.lan-stream').uncheck(); await p.waitForTimeout(50);
+  ok((await last('serverStream'))?.on === false, 'turning it off stops the server');
+
+  await clear(); await plugSwitch('nova.phone-remote').click(); await p.click('.modal .btn.primary'); await p.waitForTimeout(80);
+  const sr = await answer('serverRemote', () => ({ evt: 'serverStatus', ok: true, urls: ['http://192.168.1.20:8080/'] }));
+  ok(/^\d{4}$/.test(sr.pin) && sr.port === 8080, 'phone remote starts with a new PIN: ' + sr.pin);
+  await p.waitForTimeout(100);
+  const rs = await last('remoteState'); ok(rs && rs.state.channels.length > 0 && rs.state.channel, 'phone gets the channel list and current channel');
+  const before2 = await p.evaluate(() => S.player.ch);
+  await recv({ evt: 'remoteCmd', act: 'volume', v: 55 }); ok(await p.evaluate(() => S.player.vol) === 55, 'phone sets the volume');
+  await recv({ evt: 'remoteCmd', act: 'tune', v: before2 }); ok(await p.evaluate(() => S.player.ch) === before2, 'phone picks a channel');
+
+  await plugSwitch('nova.after-recording').click(); await p.click('.modal .btn.primary'); await p.waitForTimeout(50);
+  await go('live'); await clear();
+  await p.evaluate(() => { Engine.recording = false; S.timers = []; });
+  await p.evaluate(() => A['toggle-rec']()); await recv({ evt: 'recPath', path: 'C:\\Rec\\news.ts' });
+  await clear(); await p.evaluate(() => A['toggle-rec']()); await p.waitForTimeout(50);
+  const ex = await last('pluginExec');
+  ok(ex && ex.file === 'ffmpeg' && ex.args.includes('C:\\Rec\\news.ts') && ex.args.at(-1) === 'C:\\Rec\\news.mp4' && ex.args.includes('copy'), 'recording end runs FFmpeg to make an MP4 copy');
+  await recv({ evt: 'pluginExecDone', id: ex.id, ok: true, code: 0, out: '' }); await p.waitForTimeout(50);
+  ok((await p.textContent('#toasts')).includes('Recording processed'), 'result is reported');
+
+  /* Plugins from the folder */
+  await recv({ evt: 'plugins', folder: 'C:\\Users\\me\\AppData\\Local\\NOVA DVB Studio\\plugins', list: [
+    { dir: 'hello', manifest: JSON.stringify({ id: 'hello', name: 'Hello', version: '1.0', permissions: ['player'], settings: [{ key: 'msg', label: 'Message', default: 'hi there' }], actions: [{ id: 'say', label: 'Say' }] }),
+      code: "nova.onAction('say', () => nova.toast(nova.settings.msg)); nova.on('channel', c => nova.log('ch', c.name)); nova.channels();" },
+    { dir: 'broken', manifest: '{ not json', code: '' }] });
+  await go('preferences'); await p.click('[data-act="set-cat"][data-v="plugins"]');
+  ok(await p.locator('.plug').count() === 6, 'folder plugins are listed next to the built-in ones');
+  ok((await p.textContent('.plug.broken')).includes('plugin.json'), 'a broken plugin shows why');
+  await plugSwitch('hello').check(); await p.waitForTimeout(50);
+  ok((await p.evaluate(() => plugById('hello').error)).includes('permission'), 'a plugin cannot read channels without the permission');
+  await p.click('[data-act="plug-act"][data-v="hello|say"]'); ok((await p.textContent('#toasts')).includes('Hello: hi there'), 'plugin action and settings work');
+  await p.evaluate(() => tune(S.channels[0].id)); ok((await p.evaluate(() => plugById('hello').log.join())).includes('ch '), 'plugin hears channel changes');
+  ok(await p.evaluate(() => S.plugins.on['nova.phone-remote'] === true && S.plugins.cfg['nova.phone-remote'].pin.length === 4), 'plugin choices are saved');
   ok(errs.length === 0, 'no script errors: ' + errs.slice(0, 3).join(' | '));
 
   await go('live'); await p.screenshot({ path: path.join(OUT, 'features.png') });

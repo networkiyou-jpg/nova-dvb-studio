@@ -123,4 +123,28 @@ public class SiTests
         Assert.Equal(0x7E, scanner.Onid);
         Assert.Equal(0x7E, Assert.Single(scanner.Services).Onid);
     }
+
+    [Fact]
+    public void Service_filter_keeps_one_service_with_a_new_pat()
+    {
+        var output = new List<byte[]>();
+        var filter = new ServiceFilter(0x65, (p, o) => output.Add(p.AsSpan(o, 188).ToArray()));
+        byte[] pat = [0x00, 0x65, 0xE1, 0x00, 0x00, 0x66, 0xE2, 0x00];
+        byte[] pmt = [0xE1, 0x01, 0xF0, 0x00, 0x1B, 0xE1, 0x01, 0xF0, 0x00, 0x0F, 0xE1, 0x02, 0xF0, 0x00];
+        filter.FeedPacket(Packet(0x000, Section(0x00, 1, pat)), 0);
+        filter.FeedPacket(Packet(0x100, Section(0x02, 0x65, pmt)), 0);
+        filter.FeedPacket(Packet(0x101, [0x01]), 0);
+        filter.FeedPacket(Packet(0x201, [0x01]), 0);
+        filter.FeedPacket(Packet(0x102, [0x01]), 0);
+        Assert.Equal(4, output.Count);
+        int Pid(byte[] p) => ((p[1] & 0x1F) << 8) | p[2];
+        Assert.Equal(new[] { 0x000, 0x100, 0x101, 0x102 }, output.Select(Pid).ToArray());
+
+        byte[]? newPat = null;
+        new SectionAssembler(s => newPat = s).Feed(output[0], 0);
+        Assert.NotNull(newPat);
+        Assert.Equal(16, newPat!.Length);
+        Assert.Equal(0x65, (newPat[8] << 8) | newPat[9]);
+        Assert.Equal(0x100, ((newPat[10] & 0x1F) << 8) | newPat[11]);
+    }
 }

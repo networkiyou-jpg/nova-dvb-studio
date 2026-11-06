@@ -43,6 +43,7 @@ internal sealed class OsdWindow : Window
     private bool _want, _videoVisible, _shown;
     private double _x, _y, _w, _h, _dpr = 1;
     private string _logoKey = "";
+    private double _share = 0.46;
 
     /// <summary>"audio", "sub" or "txt" when the viewer clicks a button on the bar.</summary>
     public event Action<string>? ActionRequested;
@@ -322,6 +323,8 @@ internal sealed class OsdWindow : Window
         _numPill.Background = new LinearGradientBrush(accent, Color.FromRgb((byte)(accent.R * 0.55), (byte)(accent.G * 0.55), (byte)(accent.B * 0.55)), 0);
         _epgBox.BorderBrush = new SolidColorBrush(Color.FromArgb(0x55, accent.R, accent.G, accent.B));
 
+        // Share of the picture width: small by default so the bar never hides the picture.
+        _share = Str(d, "size") switch { "normal" => 0.6, "large" => 0.78, _ => 0.46 };
         _num.Text = Str(d, "num");
         _name.Text = Str(d, "name");
         _star.Visibility = Bool(d, "fav") ? Visibility.Visible : Visibility.Collapsed;
@@ -451,11 +454,12 @@ internal sealed class OsdWindow : Window
             if (_shown) { Hide(); _shown = false; }
             return;
         }
-        double margin = Math.Round(_w * 0.012);
-        double width = _w - margin * 2, height = width * DesignH / DesignW;
-        if (height > _h * 0.62)
+        double margin = Math.Round(_w * 0.02);
+        double width = Math.Max(_w * _share, Math.Min(560 * _dpr, _w - margin * 2)), height = width * DesignH / DesignW;
+        double maxH = _h * (_share > 0.7 ? 0.4 : 0.3);
+        if (height > maxH)
         {
-            height = _h * 0.62;
+            height = maxH;
             width = height * DesignW / DesignH;
         }
         double left = _x + (_w - width) / 2, top = _y + _h - height - margin;

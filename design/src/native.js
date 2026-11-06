@@ -183,6 +183,7 @@ if (NATIVE) (() => {
     engine('recStop');
     const c = chById(Engine.recCh) || curCh(), mins = Math.max(1, Math.round((Date.now() - Engine.recStart) / 6e4));
     S.recordings.unshift({ id: uid('r'), title: Engine.recTitle || c.name, ch: c.id, at: Engine.recStart, mins, gb: +((Engine.signal?.bitrateKbps || 0) * mins * 60 / 8e6).toFixed(2), path: Engine.recPath });
+    pluginEmit('recordingDone', { ...S.recordings[0] });
     Engine.recording = false; recording = null; save(); toast(t('Recording saved to Recordings'), 'good');
     if (S.view === 'live') { renderPlayer(); renderCards(); } else if (S.view === 'recordings') refresh();
   }
@@ -237,7 +238,7 @@ if (NATIVE) (() => {
     if (S.settings.confirmExit) confirmBox({ title: t('Close NOVA DVB Studio?'), msg: Engine.recording ? t('A recording is running. Closing stops it.') : S.timers.length ? t('Scheduled recordings run only while NOVA is open.') : t('Playback stops and the tuner is released.'), yes: t('Close'), onYes: reallyClose });
     else reallyClose();
   };
-  A.about = () => openModal({ title: 'NOVA DVB Studio', width: 480, body: `<dl class="kv dl-plain"><dt>${t('Version')}</dt><dd class="ltr">0.2.0</dd><dt>${t('Tuner')}</dt><dd>${esc(Engine.name || t('No tuner'))}</dd><dt>${t('Extension')}</dt><dd>${esc(Engine.caps?.extension || '—')}</dd><dt>${t('Icons')}</dt><dd>Lucide (ISC)</dd><dt>${t('Video')}</dt><dd>LibVLC (LGPL)</dd><dt>${t('Logos')}</dt><dd>picons project (github.com/picons/picons)</dd></dl>`, foot: `<button class="btn" data-act="logs">${t('Open log folder')}</button><button class="btn primary" data-act="modal-close">${t('Close')}</button>` });
+  A.about = () => openModal({ title: 'NOVA DVB Studio', width: 480, body: `<dl class="kv dl-plain"><dt>${t('Version')}</dt><dd class="ltr">0.3.0</dd><dt>${t('Tuner')}</dt><dd>${esc(Engine.name || t('No tuner'))}</dd><dt>${t('Extension')}</dt><dd>${esc(Engine.caps?.extension || '—')}</dd><dt>${t('Icons')}</dt><dd>Lucide (ISC)</dd><dt>${t('Video')}</dt><dd>LibVLC (LGPL)</dd><dt>${t('Logos')}</dt><dd>picons project (github.com/picons/picons)</dd></dl>`, foot: `<button class="btn" data-act="logs">${t('Open log folder')}</button><button class="btn primary" data-act="modal-close">${t('Close')}</button>` });
   A.logs = () => post({ cmd: 'openLogs' });
   saveFile = async (filename, text) => post({ cmd: 'saveFile', name: filename, text });
   A['pick-folder'] = el => post({ cmd: 'pickFolder', key: el.dataset.v });
@@ -363,6 +364,7 @@ if (NATIVE) (() => {
   setTimeout(() => {
     post({ cmd: 'uiReady' });
     post({ cmd: 'epgLoad' });
+    post({ cmd: 'pluginsList' });
     if (!S.satListAt) post({ cmd: 'fetchText', url: SAT_LIST_URL });
     if (S.settings.epgSource === 'XMLTV address' && S.settings.epgUrl && S.settings.epgUpdate !== 'Manually') setTimeout(() => loadXmltv(false), 4000);
   }, 0);
